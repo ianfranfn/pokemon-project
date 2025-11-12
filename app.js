@@ -1,32 +1,15 @@
 import 'dotenv/config' // Load the variables from .env into process.env
+import { loginHandler } from './controllers/auth.controller'
+import { config } from './config/index'
 import express from 'express'
 import axios from 'axios'
 import jwt from 'jsonwebtoken'
 
 const app = express()
-const port = 3000
 
 app.use(express.json()) // Middleware to parse JSON bodies
 
-app.post('/login', (req, res) => {
-    const { email, password } = req.body
-    if (email !== 'user@test.com' || password !== 'password123') { // I'll have to replace this with a real user authentication system with a MySQL database later
-        return res.status(401).json({ error: 'Invalid credentials' })
-    }
-
-    const payload = { // Information saved in the token
-        email: email,
-        id: '123'
-    }
-
-    const accessToken = jwt.sign(
-        payload,
-        process.env.JWT_SECRET,
-        { expiresIn: '1h' } // Token expires in 1 hour
-    )
-
-    res.json({ accessToken })
-})
+app.post('/login', loginHandler) // Route for user login
 
 function verifyToken(req, res, next) { // Middleware to verify JWT tokens
     console.log("verifying token...")
@@ -37,20 +20,21 @@ function verifyToken(req, res, next) { // Middleware to verify JWT tokens
     if (token == null) { // No token provided
         console.log("No token provided")
         return res.status(401).json({ error: 'No token provided' })
+
     }
-
-    jwt.verify(token, process.env.JWT_SECRET, (err, payload) => { // Verifying the token
-        if (err) {
-            console.log("invalid or expired token")
-            return res.status(403).json({ error: "Invalid or expired token" })   
-        }
-
+    
+    try {
+        
+        const payload = jwt.verify(token, config.jwtSecret)
         req.user = payload // Storing the payload in the request object for later use
-        console.log("token verified. User:", req.user.email)
-
         next() // Proceed to the next middleware or route handler
-    })
+        
+    } catch (error) {
+        console.error("Error verifying token:", error.message)
+        return res.status(403).json({ error: "Invalid or expired token" })
+    }
 }
+
 
 app.get('/home', verifyToken, (req, res) => { // When someone makes a GET request (REQ, from browser or Postman), a response (RES) is sent
   res.send(`Welcome to the home page, ${req.user.email}!`) // Using the email from the verified token payload

@@ -1,5 +1,6 @@
 import request from 'supertest' // supertest is used for testing HTTP endpoints
 import { app } from '../app.js' // Import the Express app
+import jwt from 'jsonwebtoken'
 
 describe('Authentication JWT Tests', () => { // "describe" block for grouping tests
 
@@ -17,6 +18,15 @@ describe('Authentication JWT Tests', () => { // "describe" block for grouping te
         expect(res.body).toHaveProperty('accessToken') // Expect response to have accessToken property
 
         token = res.body.accessToken // Save token for further tests
+        
+        const payload = jwt.decode(token) // Decode the token to verify its payload
+        expect(payload).toHaveProperty('exp')
+
+        const nowInSeconds = Math.floor(Date.now() / 1000) // Current time in seconds
+        const expiresInSeconds = payload.exp - nowInSeconds
+        expect(expiresInSeconds).toBeGreaterThan(3570) // Token should be valid for more than 3570 seconds (59.5 minutes)
+        expect(expiresInSeconds).toBeLessThanOrEqual(3600) // Token should be valid for less than or equal to 3600 seconds (1 hour)
+
         console.log('Got token for testing', token)
     })
 
