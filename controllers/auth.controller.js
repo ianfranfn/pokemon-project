@@ -1,7 +1,7 @@
 import { config } from "../config"
 import jwt from 'jsonwebtoken'
 import bcrypt from "bcryptjs"
-import pool from '../config/db.js'
+import { findByEmail } from "../models/user.model"
 
 
 export const loginHandler = async (req, res) => { // Handler for login route
@@ -11,16 +11,14 @@ export const loginHandler = async (req, res) => { // Handler for login route
     }
 
     try {
-        const sql = "SELECT * FROM users WHERE email = ?" // Query to find user by email
-        const [rows] = await pool.query(sql, [email]) // Pool.query give [rows, fields]. I'll only use rows
+        const user = await findByEmail(email)
 
-        if (rows.length === 0) {
-            console.log('Failed login: No user found');
+        if (!user) { // User not found
+            console.log('Failed login: User not found');
             return res.status(401).json({ error: 'Invalid email or password' })
         }
 
-        const user = rows[0]
-        const isMatch = await bcrypt.compare(password, user.password_hash)
+        const isMatch = await bcrypt.compare(password, user.password_hash) // if the user exists, compare the password
 
         if (!isMatch) {
             console.log('Failed login: Password does not match');
