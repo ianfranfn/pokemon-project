@@ -1,4 +1,5 @@
 import 'dotenv/config' // Load the variables from .env into process.env
+import { getJwtSecret } from './config/config.helper'
 import { loginHandler } from './controllers/auth.controller'
 import { config } from './config/index'
 import express from 'express'
@@ -11,21 +12,26 @@ app.use(express.json()) // Middleware to parse JSON bodies
 
 app.post('/login', loginHandler) // Route for user login
 
-function verifyToken(req, res, next) { // Middleware to verify JWT tokens
+const verifyToken = (req, res, next) => { // Middleware to verify JWT tokens
     console.log("verifying token...")
 
-    const authHeader = req.headers['authorization'] // looking for the Authorization header
-    const token = authHeader && authHeader.split(' ')[1] // Extracting the token from the "Bearer <token>" format
+    const authHeader = req.headers.authorization // looking for the Authorization header
 
-    if (token == null) { // No token provided
+    if (!authHeader) {
+        console.log('No token provided')
+        return res.status(401).json({ error: 'Authorization header missing' })
+    }
+
+    const token = authHeader.split(' ')[1] 
+
+    if (!token) { // No token provided
         console.log("No token provided")
         return res.status(401).json({ error: 'No token provided' })
-
     }
     
     try {
-        
-        const payload = jwt.verify(token, config.jwtSecret)
+        console.log('verifying token:')
+        const payload = jwt.verify(token, getJwtSecret()) // Verifying the token using the secret
         req.user = payload // Storing the payload in the request object for later use
         next() // Proceed to the next middleware or route handler
         

@@ -1,7 +1,7 @@
-import { config } from "../config"
+import { getJwtSecret } from "../config/config.helper.js"
 import jwt from 'jsonwebtoken'
 import bcrypt from "bcryptjs"
-import pool from '../config/db.js'
+import { UserModel } from "../models/user.model.js"
 
 
 export const loginHandler = async (req, res) => { // Handler for login route
@@ -11,15 +11,12 @@ export const loginHandler = async (req, res) => { // Handler for login route
     }
 
     try {
-        const sql = "SELECT * FROM users WHERE email = ?" // Query to find user by email
-        const [rows] = await pool.query(sql, [email]) // Pool.query give [rows, fields]. I'll only use rows
-
-        if (rows.length === 0) {
+        const user = await UserModel.findByEmail(email)
+        if (!user) {
             console.log('Failed login: No user found');
             return res.status(401).json({ error: 'Invalid email or password' })
         }
 
-        const user = rows[0]
         const isMatch = await bcrypt.compare(password, user.password_hash)
 
         if (!isMatch) {
@@ -30,7 +27,7 @@ export const loginHandler = async (req, res) => { // Handler for login route
         const payload = { email: user.email, id: user.id } // Information saved in the token if login is successful
         const accessToken = jwt.sign(
             payload,
-            config.jwtSecret,
+            getJwtSecret(),
             { expiresIn: '1h' }
         )
 

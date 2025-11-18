@@ -1,17 +1,26 @@
 import mysql from 'mysql2/promise'
 import { config } from './index.js'
 
-const pool = mysql.createPool({
+let pool
+
+const getPool = () => {
+  if (pool) {
+    return pool
+  }
+
+  console.log('MySQL Connections pool created');
+  pool = mysql.createPool({
     host: config.db.host,
     user: config.db.user,
     password: config.db.password,
-    database: config.db.database,
+    database: config.db.name,
     port: config.db.port,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
-})
+  });
 
-console.log("MySQL Connections pool created")
+  return pool;
+};
 
-export default pool
+export default getPool;
