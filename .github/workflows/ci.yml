@@ -1,4 +1,4 @@
-name: Node.js CI (Continuous Integration)
+name: Run Tests
 
 on:
   push:
