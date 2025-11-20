@@ -1,7 +1,7 @@
 import 'dotenv/config' // Load the variables from .env into process.env
 import { getJwtSecret } from './config/config.helper'
 import { loginHandler } from './controllers/auth.controller'
-import { config } from './config/index'
+import { registerHandler } from './controllers/auth.controller'
 import express from 'express'
 import axios from 'axios'
 import jwt from 'jsonwebtoken'
@@ -11,6 +11,7 @@ const app = express()
 app.use(express.json()) // Middleware to parse JSON bodies
 
 app.post('/login', loginHandler) // Route for user login
+app.post('/register', registerHandler) // Route for user registration
 
 const verifyToken = (req, res, next) => { // Middleware to verify JWT tokens
     console.log("verifying token...")

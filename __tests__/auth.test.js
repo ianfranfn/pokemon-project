@@ -2,10 +2,11 @@ jest.mock('bcryptjs')
 jest.mock('jsonwebtoken')
 jest.mock('../models/user.model.js', () => ({
   UserModel: {
-    findByEmail: jest.fn()
+    findByEmail: jest.fn(),
+    create: jest.fn()
   }
 }))
-import { loginHandler } from '../controllers/auth.controller.js' // Imports the function to test
+import { loginHandler, registerHandler } from '../controllers/auth.controller.js' // Imports the function to test
 import { UserModel } from '../models/user.model.js'; // Imports the Model to mock
 import { createMockUser } from './helpers/mockFactories.js' // Helper to create fake users
 import bcrypt from 'bcryptjs'
@@ -94,4 +95,53 @@ describe('Auth Controller - Unit Tests', () => {
     expect(mockRes.status).toHaveBeenCalledWith(401);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Invalid email or password' })
   })
+})
+
+describe('Auth Controller - Register Unit Tests', () => {
+    let mockReq
+    let mockRes
+    const testEmail = 'newuser@register.com'
+    const testPassword = 'securepassword'
+    
+    beforeEach(() => {
+        jest.clearAllMocks()
+        mockReq = {
+            body: { email: testEmail, password: testPassword }
+        }
+        mockRes = {
+            status: jest.fn(() => mockRes),
+            json: jest.fn(),
+        }
+    })
+    it('should return 201 and success message on successful registration', async () => {
+        UserModel.findByEmail.mockResolvedValue(null)
+        bcrypt.hash.mockResolvedValue('hashed_password')
+        UserModel.create.mockResolvedValue({ id: 2, email: testEmail })
+
+        await registerHandler(mockReq, mockRes)
+
+        expect(UserModel.create).toHaveBeenCalledWith({ email: testEmail, passwordHash: 'hashed_password' })
+        expect(mockRes.status).toHaveBeenCalledWith(201)
+        expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'User registered successfully' }))
+    })
+
+    it('should return 401 if the user already exists', async () => {
+        const existingUser = { id: 1, email: testEmail }
+        UserModel.findByEmail.mockResolvedValue(existingUser)
+
+        await registerHandler(mockReq, mockRes)
+
+        expect(mockRes.status).toHaveBeenCalledWith(409)
+        expect(mockRes.json).toHaveBeenCalledWith({ error: 'User already exists' })
+        expect(UserModel.create).not.toHaveBeenCalled()
+    })
+
+    it('should return 400 if email or password are missing', async () => {
+        mockReq.body.password = undefined // Missing password
+
+        await registerHandler(mockReq, mockRes)
+
+        expect(mockRes.status).toHaveBeenCalledWith(400)
+        expect(mockRes.json).toHaveBeenCalledWith({ error: 'Email and password are required for registration' })
+    })
 })
