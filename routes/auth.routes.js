@@ -1,7 +1,8 @@
 import express from 'express'
+import { getUserPokemons, addDittoToUser } from '../services/pokemon.service.js'
+import { updatePokemonHandler, deletePokemonHandler } from '../controllers/pokemon.controller.js'
 import { loginHandler, registerHandler } from '../controllers/auth.controller'
 import { verifyToken } from '../app.js'
-import axios from 'axios'
 
 const router = express.Router()
 
@@ -14,16 +15,16 @@ router.get('/home', verifyToken, (req, res) => {
 
 router.get('/api/pokemon', verifyToken, async (req, res) => {
     console.log(`got a request to /api/pokemon by user: ${req.user.email}`)
-    try {
-        const externalUrl = 'https://pokeapi.co/api/v2/pokemon/ditto' // External API URL
-        const externalApiAns = await axios.get(externalUrl) // an external API is called using Axios, Async/Await is used to confirm the response
-        const pokemonData = externalApiAns.data; // The data from the API is extracted using the Axios constant
-        res.json({
-            name: pokemonData.name,
-            id: pokemonData.id,
-            type: pokemonData.types[0].type.name,
-            image: pokemonData.sprites.front_default
-        })
+    try { // Try to get the user's Pokemons
+        const pokemons = await getUserPokemons(req.user.id) // Get Pokemons from the service
+
+        if (pokemons.length === 0) {
+            const newPokemon = await addDittoToUser(req.user.id)
+            return res.json([newPokemon])
+        }
+
+        return res.json(pokemons)
+
     } catch (error) { // If there is an error contacting the external API
         console.error('Error contacting PokeAPI:', error.message)
         res.status(500).json({
@@ -32,5 +33,9 @@ router.get('/api/pokemon', verifyToken, async (req, res) => {
         })   
     }
 })
+
+router.put('/api/pokemon/:id', verifyToken, updatePokemonHandler)
+
+router.delete('/api/pokemon/:id', verifyToken, deletePokemonHandler)
 
 export default router
