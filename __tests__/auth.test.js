@@ -97,13 +97,13 @@ describe('Auth Controller - Unit Tests', () => {
   })
 })
 
-describe('Auth Controller - Register Unit Tests', () => {
+describe('Auth Controller - Register Unit Tests', () => { // New test suite for registration
     let mockReq
     let mockRes
     const testEmail = 'newuser@register.com'
     const testPassword = 'securepassword'
     
-    beforeEach(() => {
+    beforeEach(() => { // Reset before each test
         jest.clearAllMocks()
         mockReq = {
             body: { email: testEmail, password: testPassword }
@@ -113,7 +113,7 @@ describe('Auth Controller - Register Unit Tests', () => {
             json: jest.fn(),
         }
     })
-    it('should return 201 and success message on successful registration', async () => {
+    it('should return 201 and success message on successful registration', async () => { // Test successful registration
         UserModel.findByEmail.mockResolvedValue(null)
         bcrypt.hash.mockResolvedValue('hashed_password')
         UserModel.create.mockResolvedValue({ id: 2, email: testEmail })
@@ -125,7 +125,7 @@ describe('Auth Controller - Register Unit Tests', () => {
         expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'User registered successfully' }))
     })
 
-    it('should return 401 if the user already exists', async () => {
+    it('should return 401 if the user already exists', async () => { // Test registration with existing email
         const existingUser = { id: 1, email: testEmail }
         UserModel.findByEmail.mockResolvedValue(existingUser)
 
@@ -136,7 +136,7 @@ describe('Auth Controller - Register Unit Tests', () => {
         expect(UserModel.create).not.toHaveBeenCalled()
     })
 
-    it('should return 400 if email or password are missing', async () => {
+    it('should return 400 if email or password are missing', async () => { // Test registration with missing fields
         mockReq.body.password = undefined // Missing password
 
         await registerHandler(mockReq, mockRes)
