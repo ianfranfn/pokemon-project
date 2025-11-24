@@ -1,14 +1,5 @@
 jest.mock('bcryptjs')
 jest.mock('jsonwebtoken')
-jest.mock('../models/pokemon.model.js', () => ({
-  PokemonModel: {
-    findAllByUserId: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-    create: jest.fn(),
-  }
-}))
-
 jest.mock('../models/user.model.js', () => ({
   UserModel: {
     findByEmail: jest.fn(),
@@ -16,8 +7,6 @@ jest.mock('../models/user.model.js', () => ({
   }
 }))
 import { loginHandler, registerHandler } from '../controllers/auth.controller.js' // Imports the function to test
-import { PokemonModel } from '../models/pokemon.model.js'
-import { updatePokemonHandler, deletePokemonHandler } from '../controllers/pokemon.controller.js'
 import { UserModel } from '../models/user.model.js'; // Imports the Model to mock
 import { createMockUser } from './helpers/mockFactories.js' // Helper to create fake users
 import bcrypt from 'bcryptjs'
