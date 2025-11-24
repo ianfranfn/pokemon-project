@@ -1,18 +1,15 @@
 import 'dotenv/config' // Load the variables from .env into process.env
 import { getJwtSecret } from './config/config.helper'
-import { loginHandler } from './controllers/auth.controller'
-import { config } from './config/index'
 import express from 'express'
-import axios from 'axios'
 import jwt from 'jsonwebtoken'
+import router from './routes/auth.routes'
 
 const app = express()
 
 app.use(express.json()) // Middleware to parse JSON bodies
+app.use('/', router)
 
-app.post('/login', loginHandler) // Route for user login
-
-const verifyToken = (req, res, next) => { // Middleware to verify JWT tokens
+export const verifyToken = (req, res, next) => { // Middleware to verify JWT tokens
     console.log("verifying token...")
 
     const authHeader = req.headers.authorization // looking for the Authorization header
@@ -42,32 +39,6 @@ const verifyToken = (req, res, next) => { // Middleware to verify JWT tokens
 }
 
 
-app.get('/home', verifyToken, (req, res) => { // When someone makes a GET request (REQ, from browser or Postman), a response (RES) is sent
-  res.send(`Welcome to the home page, ${req.user.email}!`) // Using the email from the verified token payload
-})
 
-app.get('/api/pokemon', verifyToken, async (req, res) => {
-
-    console.log(`Got a request to /api/pokemon by user: ${req.user.email}`)
-    try {
-        const externalUrl = 'https://pokeapi.co/api/v2/pokemon/ditto' // External API URL
-        const externalApiAns = await axios.get(externalUrl) // an external API is called using Axios, Async/Await is used to confirm the response
-        const pokemonData = externalApiAns.data; // The data from the API is extracted using the Axios constant
-        res.json({ // A JSON is sent to Postman with the extracted data
-            name: pokemonData.name,
-            id: pokemonData.id,
-            type: pokemonData.types[0].type.name, // The main type of the Pokémon is extracted (first in the list)
-            image: pokemonData.sprites.front_default // The front image of the Pokémon is extracted, sprites is an object with several images and front_default is the default front image.
-        })
-
-    } catch (error) { // Error handling in case something goes wrong
-        console.error("Error contacting PokeAPI:", error.message)
-
-        res.status(500).json({ // A 500 error (Internal Server Error) is sent to Postman
-            error: "Cannot contact PokeAPI",
-            details: error.message 
-        })
-    }
-})
 
 export { app } // Exporting the app for testing purposes
