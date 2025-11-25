@@ -1,5 +1,6 @@
 import 'dotenv/config' // Load the variables from .env into process.env
 import express from 'express'
+import router from './routes/auth.routes'
 
 const app = express()
 
