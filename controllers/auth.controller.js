@@ -3,6 +3,32 @@ import jwt from 'jsonwebtoken'
 import bcrypt from "bcryptjs"
 import { UserModel } from "../models/user.model.js"
 
+export const registerHandler = async (req, res) => {
+    const { email, password } = req.body // validating inputs
+    if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required for registration' })
+    }
+
+    try {
+        const existingUser = await UserModel.findByEmail(email)
+        if (existingUser) {
+            return res.status(409).json({ error: 'User already exists' })
+        }
+        const salt = await bcrypt.genSalt(10) // Generating a salt for hashing
+        const passwordHash = await bcrypt.hash(password,salt)
+        const newUser = await UserModel.create ({email, passwordHash})
+        console.log(`New user registered: ${newUser.email}`);
+
+        return res.status(201).json ({ message: 'User registered successfully', userId: newUser.id })
+    }
+    catch (error) { 
+        console.log('Registration error:', error);
+        return res.status(500).json({ error: 'Internal server error' })
+    }
+
+
+}
+
 
 export const loginHandler = async (req, res) => { // Handler for login route
     const { email, password } = req.body // validating inputs
