@@ -5,6 +5,7 @@ import express from 'express'
 const app = express()
 
 app.use(express.json()) // Middleware to parse JSON bodies
+app.use('/', router)
 
 app.use('/', router) // Using the auth routes
 
