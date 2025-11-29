@@ -1,6 +1,8 @@
 import express from 'express'
+import { getUserPokemons, addDittoToUser } from '../services/pokemon.service.js'
+import { updatePokemonHandler, deletePokemonHandler } from '../controllers/pokemon.controller.js'
 import { loginHandler, registerHandler } from '../controllers/auth.controller'
-import { verifyToken } from '../middleware/auth.middleware.js'
+import { verifyToken } from '../app.js'
 
 const router = express.Router()
 
@@ -11,5 +13,8 @@ router.get('/home', verifyToken, (req, res) => {
     res.send(`Welcome to the page, ${req.user.email}!`)
 })
 
+router.put('/api/pokemon/:id', verifyToken, updatePokemonHandler)
+
+router.delete('/api/pokemon/:id', verifyToken, deletePokemonHandler)
 
 export default router

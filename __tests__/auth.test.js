@@ -1,5 +1,13 @@
 jest.mock('bcryptjs')
 jest.mock('jsonwebtoken')
+jest.mock('../models/pokemon.model.js', () => ({
+  PokemonModel: {
+    findAllByUserId: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    create: jest.fn(),
+  }
+}))
 jest.mock('../models/user.model.js', () => ({
   UserModel: {
     findByEmail: jest.fn(),
@@ -7,6 +15,8 @@ jest.mock('../models/user.model.js', () => ({
   }
 }))
 import { loginHandler, registerHandler } from '../controllers/auth.controller.js' // Imports the function to test
+import { PokemonModel } from '../models/pokemon.model.js'
+import { updatePokemonHandler, deletePokemonHandler } from '../controllers/pokemon.controller.js'
 import { UserModel } from '../models/user.model.js'; // Imports the Model to mock
 import { createMockUser } from './helpers/mockFactories.js' // Helper to create fake users
 import bcrypt from 'bcryptjs'
@@ -141,3 +151,58 @@ describe('Auth Controller - Register Unit Tests', () => { // New test suite for 
     })
 })
 
+describe('Pokemon Controller - CRUD Unit Tests', () => {
+  let mockReq
+  let mockRes
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+    mockReq = {
+      params: { id: 101 },
+      body: { name: 'Pikachu' },
+      user: { id: 42 }
+    }
+    mockRes = {
+      status: jest.fn(() => mockRes),
+      json: jest.fn(),
+      send: jest.fn(), 
+    }
+  })
+
+  it('shold return 200 on successful pokemon update', async () => {
+    PokemonModel.update.mockResolvedValue(true)
+
+    await updatePokemonHandler(mockReq, mockRes)
+
+    expect(PokemonModel.update).toHaveBeenCalledWith(101, { name: 'Pikachu' })
+    expect(mockRes.status).toHaveBeenCalledWith(200)
+    expect(mockRes.json).toHaveBeenCalledWith({ message: 'Pokemon updated successfully' })
+  })
+
+  it('should return 404 if pokemon update fails or not found', async () => {
+    PokemonModel.update.mockResolvedValue(false)
+
+    await updatePokemonHandler(mockReq, mockRes)
+
+    expect(mockRes.status).toHaveBeenCalledWith(404)
+  })
+
+  it('should return 204 on successful pokemon deletion', async () => {
+    PokemonModel.delete.mockResolvedValue(true)
+
+    await deletePokemonHandler(mockReq, mockRes)
+
+    expect(PokemonModel.delete).toHaveBeenCalledWith(101)
+    expect(mockRes.status).toHaveBeenCalledWith(204)
+    expect(mockRes.send).toHaveBeenCalled()
+  })
+
+  it('should return 404 if pokemon deletion fails or not found', async () => {
+    PokemonModel.delete.mockResolvedValue(false)
+
+    await deletePokemonHandler(mockReq, mockRes)
+
+    expect(mockRes.status).toHaveBeenCalledWith(404)
+    expect(mockRes.send).not.toHaveBeenCalled()
+  })
+})

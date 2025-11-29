@@ -1,6 +1,8 @@
 import 'dotenv/config' // Load the variables from .env into process.env
-import router from './routes/auth.routes.js' // Importing the auth routes
+import { getJwtSecret } from './config/config.helper'
 import express from 'express'
+import jwt from 'jsonwebtoken'
+import router from './routes/auth.routes'
 
 const app = express()
 
