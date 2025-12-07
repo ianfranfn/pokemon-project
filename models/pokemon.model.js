@@ -17,15 +17,15 @@ export class PokemonModel {
 
     static async update(id, { name }) {
         const pool = getPool()
-        const sql = 'UPDATE user_pokemons SET name = ? WHERE id = ?'
-        const [result] = await pool.query(sql, [name, id])
+        const sql = 'UPDATE user_pokemons SET name = ? WHERE id = ? AND user_id = ?'
+        const [result] = await pool.query(sql, [name, id, userId])
         return result.affectedRows > 0
     }
 
     static async delete(id) {
         const pool = getPool()
-        const sql = 'DELETE FROM user_pokemons WHERE id = ?'
-        const [result] = await pool.query(sql, [id])
+        const sql = 'DELETE FROM user_pokemons WHERE id = ? AND user_id = ?'
+        const [result] = await pool.query(sql, [id, userId])
         return result.affectedRows > 0
     }
 }

@@ -11,7 +11,7 @@ export const updatePokemonHandler = async (req, res) => {
     }
 
     try {
-        const success = await PokemonModel.update(id, { name })
+        const success = await PokemonModel.update(id, userId, { name })
 
         if (!success) {
             return res.status(404).json({ error: 'Pokemon not found or no changes made' })
@@ -29,7 +29,7 @@ export const deletePokemonHandler = async (req, res) => {
     const userId = req.user.id
 
     try {
-        const success = await PokemonModel.delete(id)
+        const success = await PokemonModel.delete(id, userId)
 
         if (!success) {
             return res.status(404).json({ error: 'Pokemon not found' })

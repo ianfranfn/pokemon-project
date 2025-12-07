@@ -174,7 +174,7 @@ describe('Pokemon Controller - CRUD Unit Tests', () => {
 
     await updatePokemonHandler(mockReq, mockRes)
 
-    expect(PokemonModel.update).toHaveBeenCalledWith(101, { name: 'Pikachu' })
+    expect(PokemonModel.update).toHaveBeenCalledWith(101, 42, { name: 'Pikachu' })
     expect(mockRes.status).toHaveBeenCalledWith(200)
     expect(mockRes.json).toHaveBeenCalledWith({ message: 'Pokemon updated successfully' })
   })
@@ -192,7 +192,7 @@ describe('Pokemon Controller - CRUD Unit Tests', () => {
 
     await deletePokemonHandler(mockReq, mockRes)
 
-    expect(PokemonModel.delete).toHaveBeenCalledWith(101)
+    expect(PokemonModel.delete).toHaveBeenCalledWith(101, 42)
     expect(mockRes.status).toHaveBeenCalledWith(204)
     expect(mockRes.send).toHaveBeenCalled()
   })
