@@ -1,6 +1,7 @@
 import { getJwtSecret } from "../config/config.helper.js"
 import jwt from 'jsonwebtoken'
 import bcrypt from "bcryptjs"
+import logger from '../utils/logger.js'
 import { UserModel } from "../models/user.model.js"
 
 export const registerHandler = async (req, res) => {
@@ -17,12 +18,12 @@ export const registerHandler = async (req, res) => {
         const salt = await bcrypt.genSalt(10) // Generating a salt for hashing
         const passwordHash = await bcrypt.hash(password,salt)
         const newUser = await UserModel.create ({email, passwordHash})
-        console.log(`New user registered: ${newUser.email}`);
+        logger.info(`New user registered: ${newUser.email}`);
 
         return res.status(201).json ({ message: 'User registered successfully', userId: newUser.id })
     }
     catch (error) { 
-        console.log('Registration error:', error);
+        logger.error('Registration error:', error) // Logging the error for debugging, now with logger.
         return res.status(500).json({ error: 'Internal server error' })
     }
 
@@ -39,14 +40,14 @@ export const loginHandler = async (req, res) => { // Handler for login route
     try {
         const user = await UserModel.findByEmail(email)
         if (!user) {
-            console.log('Failed login: No user found');
+            logger.warn('Failed login: User not found for email', { email })
             return res.status(401).json({ error: 'Invalid email or password' })
         }
 
         const isMatch = await bcrypt.compare(password, user.password_hash)
 
         if (!isMatch) {
-            console.log('Failed login: Password does not match');
+            logger.warn('Failed login: Incorrect password for email', { email })
             return res.status(401).json({ error: 'Invalid email or password' })
         }
 
@@ -60,7 +61,7 @@ export const loginHandler = async (req, res) => { // Handler for login route
         res.json({ accessToken: accessToken })
 
     } catch (error) {
-        console.log('Login error', error);
+        logger.error('Login error:', error)
         return res.status(500).json({ error: 'Internal server error' })
     }
 }
