@@ -19,7 +19,7 @@ export const updatePokemonHandler = async (req, res) => {
 
         return res.status(200).json({ message: 'Pokemon updated successfully' })
     } catch (error) {
-        console.error('Update error:', error);
+        logger.error('Update error:', error)
         return res.status(500).json({ error: 'Internal server error during update' })
     }
 }
@@ -37,14 +37,14 @@ export const deletePokemonHandler = async (req, res) => {
 
         return res.status(204).send()
     } catch (error) {
-        console.error('Delete error:', error);
+        logger.error('Deletion error:', error)
         return res.status(500).json({ error: 'Internal server error during deletion' })
         
     }
 }
 
 export const getPokemonHandler = async (req, res) => {
-    console.log(`got a request to /api/pokemon by user: ${req.user.email}`)
+    logger.info(`got a request to /api/pokemon by user: ${req.user.email}`)
     try { // Try to get the user's Pokemons
         const userId = req.user.id
         const pokemons = await getUserPokemons(userId) // Get Pokemons from the service
@@ -54,7 +54,7 @@ export const getPokemonHandler = async (req, res) => {
                 const newPokemon = await addDittoToUser(userId)
                 return res.status(201).json([newPokemon]) 
             } catch (creationError) { // Captures the specific error of creation (external API or DB)
-                console.error('Error adding new Pokemon:', creationError.message);
+                logger.warn('Error adding new Pokemon:', creationError.message);
                 return res.status(503).json({
                     error: 'External service unavailable',
                     details: creationError.message
@@ -65,7 +65,7 @@ export const getPokemonHandler = async (req, res) => {
         return res.status(200).json(pokemons)
 
     } catch (error) { // If there is an error contacting the external API
-        console.error('Error fetching Pokemons:', error.message)
+        logger.error('Error fetching Pokemons:', error.message)
         return res.status(500).json({
             error: 'Internal database error during read',
             details: error.message

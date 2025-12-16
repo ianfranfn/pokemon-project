@@ -13,7 +13,7 @@ export const fetchDittoData = async () => {
             image: pokemonData.sprites.front_default
         }
     } catch (error) {
-        console.error('Error contacting PokeAPI:', error.message);
+        logger.error('Error contacting PokeAPI:', error.message);
         throw new Error('Cannot contact PokeAPI');
     }
 }
