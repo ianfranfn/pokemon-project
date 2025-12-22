@@ -1,9 +1,7 @@
 import 'dotenv/config' // Load the variables from .env into process.env
 import express from 'express'
-import { createRequire } from 'module'
-const require = createRequire(import.meta.url)
-const Sentry = require('@sentry/node')
-const Tracing = require('@sentry/tracing')
+import * as Sentry from '@sentry/node'
+import * as Tracing from '@sentry/tracing'
 import router from './routes/auth.routes.js'
 
 const app = express()
@@ -19,7 +17,7 @@ app.use(Sentry.Handlers.tracingHandler()) // Sentry tracing handler middleware
 
 app.use(express.json()) // Middleware to parse JSON bodies
 app.use(express.urlencoded({ extended: true }))
-app.use('/', router) // Using the auth routes
+app.use('/', router) // Using the auth routes   
 
 app.use(Sentry.Handlers.errorHandler()) // Sentry error handler middleware
 
