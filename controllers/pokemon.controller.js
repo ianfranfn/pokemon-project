@@ -1,5 +1,5 @@
-import { PokemonModel } from "../models/pokemon.model"
-import { addDittoToUser, getUserPokemons } from "../services/pokemon.service"
+import { PokemonModel } from "../models/pokemon.model.js"
+import { addDittoToUser, getUserPokemons } from "../services/pokemon.service.js"
 
 export const updatePokemonHandler = async (req, res) => {
     const { id } = req.params
