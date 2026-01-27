@@ -51,8 +51,6 @@ export const getPokemonHandler = async (req, res) => {
     logger.info(`got a request to /api/pokemon by user: ${req.user.email}`)
     try { // Try to get the user's Pokemons
 
-        throw new Error("Simulated external API failure")
-
         const userId = req.user.id
         const pokemons = await getUserPokemons(userId) // Get Pokemons from the service
 
