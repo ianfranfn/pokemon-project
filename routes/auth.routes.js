@@ -1,6 +1,6 @@
 import express from 'express'
 import { updatePokemonHandler, deletePokemonHandler, getPokemonHandler } from '../controllers/pokemon.controller.js'
-import { loginHandler, registerHandler } from '../controllers/auth.controller'
+import { loginHandler, registerHandler } from '../controllers/auth.controller.js'
 import { validateRegistration } from '../middleware/validation.middleware.js'
 import { verifyToken } from '../middleware/auth.middleware.js'
 

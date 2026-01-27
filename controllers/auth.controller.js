@@ -2,13 +2,14 @@ import { getJwtSecret } from "../config/config.helper.js"
 import jwt from 'jsonwebtoken'
 import bcrypt from "bcryptjs"
 import logger from '../utils/logger.js'
+import * as Sentry from '@sentry/node'
 import { UserModel } from "../models/user.model.js"
 
 export const registerHandler = async (req, res) => {
     const { email, password } = req.body // validating inputs
     if (!email || !password) {
         return res.status(400).json({ error: 'Email and password are required for registration' })
-    }
+    } 
 
     try {
         const existingUser = await UserModel.findByEmail(email)
@@ -23,6 +24,7 @@ export const registerHandler = async (req, res) => {
         return res.status(201).json ({ message: 'User registered successfully', userId: newUser.id })
     }
     catch (error) { 
+        Sentry.captureException(error)
         logger.error('Registration error:', error) // Logging the error for debugging, now with logger.
         return res.status(500).json({ error: 'Internal server error' })
     }

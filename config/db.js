@@ -7,7 +7,7 @@ const getPool = () => {
   if (pool) {
     return pool
   }
-
+  console.log('DEBUG DB CONFIG:', config.db)
   console.log('MySQL Connections pool created');
   pool = mysql.createPool({
     host: config.db.host,
