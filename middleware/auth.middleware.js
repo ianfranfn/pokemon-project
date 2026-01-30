@@ -1,4 +1,5 @@
 import { getJwtSecret } from '../config/config.helper.js'
+import logger from '../utils/logger.js'
 import jwt from 'jsonwebtoken'
 
 export const verifyToken = (req, res, next) => { // Middleware to verify JWT tokens
