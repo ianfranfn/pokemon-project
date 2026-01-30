@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000" # Expose application on port 3000 to the host
+    environment:
+      - PORT=3000
+      - DB_HOST=mysql-db # Use the service name as the host
+      - DB_USER=root
+      - DB_PASSWORD=4}7k_8PA%xJp
+      - DB_NAME=pokemon_db
+      - JWT_SECRET=j269MQp<f8D3
+      - SENTRY_DSN=https://1a5508b0643b1c2d872802ef266fd6a4@o4510542021853184.ingest.us.sentry.io/4510542024540160
+    depends_on:
+      - mysql-db # Ensure the database starts before the app
+
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-container-proyectos
+    environment:
+      - MYSQL_ROOT_PASSWORD=4}7k_8PA%xJp
+      - MYSQL_DATABASE=pokemon_db
+    ports:
+      - "3307:3306" # Expose MySQL on port 3307 to the host
+    volumes:
+      - mysql_data:/var/lib/mysql # Persist MySQL data even with container restarts
+
+volumes:
+    mysql_data:
