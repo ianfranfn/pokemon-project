@@ -1,4 +1,4 @@
-# I use an officia Node.js image as a parent image
+# I use an official Node.js image as a parent image
 FROM node:20-alpine
 # Set the working directory in the container to /app
 WORKDIR /app

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     build: .
@@ -14,7 +12,8 @@ services:
       - JWT_SECRET=j269MQp<f8D3
       - SENTRY_DSN=https://1a5508b0643b1c2d872802ef266fd6a4@o4510542021853184.ingest.us.sentry.io/4510542024540160
     depends_on:
-      - mysql-db # Ensure the database starts before the app
+      mysql-db: # Ensure the database starts before the app
+        condition: service_healthy # Waits for it to be healthy
 
   mysql-db:
     image: mysql:8.0
@@ -26,6 +25,12 @@ services:
       - "3307:3306" # Expose MySQL on port 3307 to the host
     volumes:
       - mysql_data:/var/lib/mysql # Persist MySQL data even with container restarts
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
     mysql_data:
