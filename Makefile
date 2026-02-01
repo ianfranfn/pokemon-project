@@ -6,7 +6,7 @@ APP_SERVICE = app
 .PHONY: all build up down test logs clean
 
 # When typing 'make all', it will run these commands in order
-all: down build up wait-logs test
+setup: down build up wait-logs test
 	@echo "All services are up and running, and tests have been executed."
 
 # Build Docker images
@@ -22,7 +22,7 @@ up:
 # Stop and remove Docker containers
 down:  
 	@echo "Stopping Docker containers..."
-	$(DOCKER_COMPOSE) down
+	$(DOCKER_COMPOSE) down --remove-orphans
 
 # Run tests inside the app container
 test: 
