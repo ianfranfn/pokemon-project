@@ -1,26 +1,27 @@
 services:
   app:
     build: .
+    container_name: pokemon-backend
     ports:
-      - "3000:3000" # Expose application on port 3000 to the host
+      - "${PORT}:${PORT}" # Expose application on port 3000 to the host
     environment:
-      - PORT=3000
-      - DB_HOST=mysql-db # Use the service name as the host
-      - DB_USER=root
-      - DB_PASSWORD=4}7k_8PA%xJp
-      - DB_NAME=pokemon_db
-      - JWT_SECRET=j269MQp<f8D3
-      - SENTRY_DSN=https://1a5508b0643b1c2d872802ef266fd6a4@o4510542021853184.ingest.us.sentry.io/4510542024540160
+      - PORT=${PORT}
+      - DB_HOST=${DB_HOST} # Uses the service name as the host
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - JWT_SECRET=${JWT_SECRET}
+      - SENTRY_DSN=${SENTRY_DSN}
     depends_on:
       mysql-db: # Ensure the database starts before the app
         condition: service_healthy # Waits for it to be healthy
 
   mysql-db:
     image: mysql:8.0
-    container_name: mysql-container-proyectos
+    container_name: pokemon-db
     environment:
-      - MYSQL_ROOT_PASSWORD=4}7k_8PA%xJp
-      - MYSQL_DATABASE=pokemon_db
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
     ports:
       - "3307:3306" # Expose MySQL on port 3307 to the host
     volumes:

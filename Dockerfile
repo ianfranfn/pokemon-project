@@ -7,13 +7,15 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci
 
 # Bundle app source
 COPY . .
 
 # Make port 3000 available to the world outside this container
-EXPOSE 3000
+ARG PORT=3000
+ENV PORT $PORT
+EXPOSE $PORT
 
 # Define environment variable
 CMD ["npm", "start"]
