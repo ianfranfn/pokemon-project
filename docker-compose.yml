@@ -1,0 +1,37 @@
+services:
+  app:
+    build: .
+    container_name: pokemon-backend
+    ports:
+      - "${PORT}:${PORT}" # Expose application on port 3000 to the host
+    environment:
+      - PORT=${PORT}
+      - DB_HOST=${DB_HOST} # Uses the service name as the host
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - JWT_SECRET=${JWT_SECRET}
+      - SENTRY_DSN=${SENTRY_DSN}
+    depends_on:
+      mysql-db: # Ensure the database starts before the app
+        condition: service_healthy # Waits for it to be healthy
+
+  mysql-db:
+    image: mysql:8.0
+    container_name: pokemon-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=${DB_NAME}
+    ports:
+      - "3307:3306" # Expose MySQL on port 3307 to the host
+    volumes:
+      - mysql_data:/var/lib/mysql # Persist MySQL data even with container restarts
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+    mysql_data:
