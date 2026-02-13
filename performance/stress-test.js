@@ -3,17 +3,21 @@ import { check, sleep } from 'k6'
 
 export const options = {
     stages: [
-        { duration: '30s', target: 20 }, // Ramp up to 20 users over 30 seconds
-        { duration: '1m', target: 50 }, // Stay at 50 users for 1 minute
-        { duration: '30s', target: 100 }, // Ramp up to 100 users over 30 seconds
-        { duration: '1m', target: 200 }, // Stay at 200 users for 1 minute
+        { duration: '1m', target: 200 }, // Ramp up to 200 users over 1 minute
+        { duration: '1m', target: 500 }, // Stay at 500 users for 1 minute
+        { duration: '2m', target: 1000 }, // Ramp up to 1000 users over 2min
+        { duration: '2m', target: 2000 }, // Stay at 2000 users for 2min
         { duration: '30s', target: 0 } // Ramp down to 0 users over 30 seconds
     ],
+    thresholds: {
+        http_req_failed: ['rate<0.01'], // Fail if more than 1% of requests fail
+        http_req_duration: ['p(95)<2000'] // 95% of requests should complete within 2 seconds
+    }
 }
 
 export default function () {
-    const BASE_URL = __ENV.API_URL || 'http://18.191.190.137:3000'
-    const TOKEN = __ENV.TOKEN || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImRvY2tlcl91c2VyQHRlc3QuY29tIiwiaWQiOjEsImlhdCI6MTc3MDU3MjgyMiwiZXhwIjoxNzcwNTc2NDIyfQ.b3nDoU1-Pmh7s_6VSCdmxSlfMbXsZ2zHG9M-0nW7hH0'
+    const BASE_URL = __ENV.API_URL || 'http://3.138.156.109:3000'
+    const TOKEN = __ENV.TOKEN || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImRvY2tlcl91c2VyQHRlc3QuY29tIiwiaWQiOjEsImlhdCI6MTc3MDY5MDc0MiwiZXhwIjoxNzcwNjk0MzQyfQ.ufBr7f6tJdzBqTN8qfjDkMTzz2Jl-ubyPc4tTGO1J7Y'
     // Define the API endpoint and request parameters
     const url = `${BASE_URL}/api/pokemon`
     const params = {
@@ -30,5 +34,5 @@ export default function () {
         'tiempo respuesta < 500ms': (r) => r.timings.duration < 500,
     })
     // Wait 1 second between iterations to simulate user think time
-    sleep(1)
+    sleep(0.5)
 }
