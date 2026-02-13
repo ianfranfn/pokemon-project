@@ -1,5 +1,6 @@
 import 'dotenv/config' // Load the variables from .env into process.env
 import express from 'express'
+import cors from 'cors'
 import * as Sentry from '@sentry/node'
 import router from './routes/auth.routes.js'
 import swaggerUi from 'swagger-ui-express'
