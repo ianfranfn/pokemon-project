@@ -3,11 +3,14 @@ DOCKER_COMPOSE = docker-compose
 APP_SERVICE = app
 
 # PHONY tells Make that these are not files, but commands
-.PHONY: all build up down test logs clean
+.PHONY: all build up down test logs clean start
 
 # When typing 'make all', it will run these commands in order
 setup: down build up wait-logs test
 	@echo "All services are up and running, and tests have been executed."
+
+start: build test up
+	@echo "Deployment complete: The new version has passed testing and is online"
 
 # Build Docker images
 build: 
