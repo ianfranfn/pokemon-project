@@ -1,12 +1,12 @@
 import * as Sentry from '@sentry/node'
 import logger from '../utils/logger.js'
 import { PokemonModel } from "../models/pokemon.model.js"
-import { addDittoToUser, getUserPokemons } from "../services/pokemon.service.js"
+import { addDittoToUser } from "../services/pokemon.service.js"
+import { parse } from 'dotenv'
 
 export const updatePokemonHandler = async (req, res) => {
     const { id } = req.params
     const { name } = req.body
-    const userId = req.user.id
 
     if (!name) {
         return res.status(400).json({ error: 'Name field is required' })
@@ -29,7 +29,6 @@ export const updatePokemonHandler = async (req, res) => {
 
 export const deletePokemonHandler = async (req, res) => {
     const { id } = req.params
-    const userId = req.user.id
 
     try {
         const success = await PokemonModel.delete(id)
@@ -52,12 +51,24 @@ export const getPokemonHandler = async (req, res) => {
     try { // Try to get the user's Pokemons
 
         const userId = req.user.id
-        const pokemons = await getUserPokemons(userId) // Get Pokemons from the service
+        const page = parseInt(req.query.page) || 1
+        const limit = parseInt(req.query.limit) || 10
+        const offset = (page - 1) * limit
 
-        if (pokemons.length === 0) {
+        const { rows, totalItems } = await PokemonModel.findAllByUserId(userId, limit, offset)
+
+        if (totalItems === 0 && page === 1) {
             try {
                 const newPokemon = await addDittoToUser(userId)
-                return res.status(201).json([newPokemon]) 
+                return res.status(201).json({
+                    data: [newPokemon],
+                    pagination: {
+                        totalItems: 1,
+                        totalPages: 1,
+                        currentPage: 1,
+                        itemsPerPage: limit
+                    }
+                }) 
             } catch (creationError) { // Captures the specific error of creation (external API or DB)
                 Sentry.captureException(creationError)
                 logger.warn('Error adding new Pokemon:', creationError.message);
@@ -68,7 +79,17 @@ export const getPokemonHandler = async (req, res) => {
             }
         }
 
-        return res.status(200).json(pokemons)
+        const totalPages = Math.ceil(totalItems / limit)
+
+        return res.status(200).json({
+            data: rows,
+            pagination: {
+                totalItems,
+                totalPages,
+                currentPage: page,
+                itemsPerPage: limit
+            }
+        })
 
     } catch (error) { // If there is an error contacting the external API
         Sentry.captureException(error)

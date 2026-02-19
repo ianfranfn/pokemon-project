@@ -18,6 +18,19 @@ router.get('/home', verifyToken, (req, res) => {
  * /api/pokemon:
  *  get:
  *    summary: Get the list of all Pokemon
+ *      parameters:
+ *      - in: query
+ *      name: page
+ *      schema:
+ *        type: integer
+ *        default: 1
+ *        description: The page number
+ *      - in: query
+ *      name: limit
+ *      schema: 
+ *      type: integer
+ *      default: 10
+ *      description: the number of items per page           
  *    tags: [Pokemons]
  *    security:
  *    - bearerAuth: []
@@ -27,19 +40,30 @@ router.get('/home', verifyToken, (req, res) => {
  *        content:
  *          application/json:
  *            schema:
+ *              type: object
+ *              properties:
+ *              data:
  *              type: array
  *              items:
- *                type: object
- *                properties:
- *                  id:
- *                    type: integer
- *                    example: 1
- *                  name:
- *                    type: string
- *                    example: "Pikachu"
- *                  image:
- *                    type: string
- *                    example: "http://imagen.com/pikachu.png"
+ *                $ref: '#/components/schemas/Pokemon'
+ *              pagination:
+ *              type: object
+ *              properties:
+ *                totalItems:
+ *                  type: integer
+ *                totalPages:
+ *                  type: integer
+ *                currentPage:
+ *                  type: integer
+ *                itemsPerPage: 
+ *                  type: integer
+ *                example: 1
+ *                name:
+ *                  type: string
+ *                  example: "Pikachu"
+ *                image:
+ *                  type: string
+ *                  example: "http://imagen.com/pikachu.png"
  *      401:
  *        description: Not authorized (Token Missing)
  */
