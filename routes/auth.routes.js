@@ -16,56 +16,59 @@ router.get('/home', verifyToken, (req, res) => {
 /**
  * @swagger
  * /api/pokemon:
- *  get:
- *    summary: Get the list of all Pokemon
- *      parameters:
- *      - in: query
- *      name: page
- *      schema:
- *        type: integer
- *        default: 1
- *        description: The page number
- *      - in: query
- *      name: limit
- *      schema: 
- *      type: integer
- *      default: 10
- *      description: the number of items per page           
- *    tags: [Pokemons]
- *    security:
- *    - bearerAuth: []
- *    responses:
- *      200:
- *        description: List of Pokemon obtained correctly
- *        content:
- *          application/json:
- *            schema:
- *              type: object
- *              properties:
- *              data:
- *              type: array
- *              items:
- *                $ref: '#/components/schemas/Pokemon'
- *              pagination:
- *              type: object
- *              properties:
- *                totalItems:
- *                  type: integer
- *                totalPages:
- *                  type: integer
- *                currentPage:
- *                  type: integer
- *                itemsPerPage: 
- *                  type: integer
- *                example: 1
- *                name:
- *                  type: string
- *                  example: "Pikachu"
- *                image:
- *                  type: string
- *                  example: "http://imagen.com/pikachu.png"
- *      401:
- *        description: Not authorized (Token Missing)
+ *   get:
+ *     summary: Get the list of all Pokemon
+ *     tags: [Pokemons]
+ *     security:
+ *     - bearerAuth: []
+ *     parameters:
+ *     - in: query
+ *       name: page
+ *       schema:
+ *         type: integer
+ *         default: 1
+ *       description: The page number
+ *     - in: query
+ *       name: limit
+ *       schema:
+ *         type: integer
+ *         default: 10
+ *       description: The number of items per page
+ *     responses:
+ *       200:
+ *         description: List of Pokemon obtained correctly
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Pokemon'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     totalItems:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *                     currentPage:
+ *                       type: integer
+ *                     itemsPerPage:
+ *                       type: integer
+ *               example:
+ *                 data:
+ *                   - id: 1
+ *                     name: "Pikachu"
+ *                     image: "http://imagen.com/pikachu.png"
+ *                 pagination:
+ *                   totalItems: 1
+ *                   totalPages: 1
+ *                   currentPage: 1
+ *                   itemsPerPage: 10
+ *       401:
+ *         description: Not authorized (Token Missing)
  */
 
 
