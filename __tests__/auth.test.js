@@ -16,7 +16,7 @@ jest.mock('../models/user.model.js', () => ({
 }))
 import { loginHandler, registerHandler } from '../controllers/auth.controller.js' // Imports the function to test
 import { PokemonModel } from '../models/pokemon.model.js'
-import { updatePokemonHandler, deletePokemonHandler } from '../controllers/pokemon.controller.js'
+import { updatePokemonHandler, deletePokemonHandler, getPokemonHandler } from '../controllers/pokemon.controller.js'
 import { UserModel } from '../models/user.model.js'; // Imports the Model to mock
 import { createMockUser } from './helpers/mockFactories.js' // Helper to create fake users
 import bcrypt from 'bcryptjs'
@@ -160,7 +160,8 @@ describe('Pokemon Controller - CRUD Unit Tests', () => {
     mockReq = {
       params: { id: 101 },
       body: { name: 'Pikachu' },
-      user: { id: 42 }
+      user: { id: 42, email: 'test@user.com' },
+      query: {}
     }
     mockRes = {
       status: jest.fn(() => mockRes),
@@ -204,5 +205,31 @@ describe('Pokemon Controller - CRUD Unit Tests', () => {
 
     expect(mockRes.status).toHaveBeenCalledWith(404)
     expect(mockRes.send).not.toHaveBeenCalled()
+  })
+
+  it('should return 200 and a paginated list of pokemons on GET', async () => {
+    mockReq.query = { page: '2', limit: '5' }
+
+    const mockDbResponse = {
+      rows: [{ id: 1, name: 'Bulbasaur' }, { id: 2, name: 'Ivysaur' }],
+      totalItems: 12
+    }
+    PokemonModel.findAllByUserId.mockResolvedValue(mockDbResponse)
+
+    await getPokemonHandler(mockReq, mockRes)
+
+    expect(PokemonModel.findAllByUserId).toHaveBeenCalledWith(42, 5, 5)
+
+    expect(mockRes.status).toHaveBeenCalledWith(200)
+
+    expect(mockRes.json).toHaveBeenCalledWith({
+      data: mockDbResponse.rows,
+      pagination: {
+        totalItems: 12,
+        totalPages: 3,
+        currentPage: 2,
+        itemsPerPage: 5
+      }
+    })
   })
 })

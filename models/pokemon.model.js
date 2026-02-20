@@ -1,11 +1,21 @@
 import getPool from '../config/db.js'
 
 export class PokemonModel {
-    static async findAllByUserId(userId) {
+    static async findAllByUserId(userId, limit, offset) {
         const pool = getPool()
-        const sql = 'SELECT * FROM user_pokemons WHERE user_id = ?'
-        const [rows] = await pool.query(sql, [userId])
-        return rows
+
+        // ensure that limit and offset are numbers using Number()
+        const sqlData = 'SELECT * FROM user_pokemons WHERE user_id = ? LIMIT ? OFFSET ?'
+        const [rows] = await pool.query(sqlData, [userId, Number(limit), Number(offset)])
+
+        // Query to count the TOTAL for that user (no limit)
+        const sqlCount = 'SELECT COUNT(*) as total FROM user_pokemons WHERE user_id = ?'
+        const [totalResult] = await pool.query(sqlCount, [userId])
+
+        return {
+          rows,
+          totalItems: totalResult[0].total  
+        } 
     }
 
     static async create ({ userId, name, apiId, type, image }) {
