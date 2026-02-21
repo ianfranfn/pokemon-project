@@ -45,7 +45,14 @@ router.get('/home', verifyToken, (req, res) => {
  *                 data:
  *                   type: array
  *                   items:
- *                     $ref: '#/components/schemas/Pokemon'
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       name:
+ *                         type: string
+ *                       image:
+ *                         type: string
  *                 pagination:
  *                   type: object
  *                   properties:
