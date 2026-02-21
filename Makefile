@@ -1,5 +1,5 @@
 # Makefile for Docker Compose commands
-DOCKER_COMPOSE = docker-compose
+DOCKER_COMPOSE = docker compose
 APP_SERVICE = app
 
 # PHONY tells Make that these are not files, but commands
