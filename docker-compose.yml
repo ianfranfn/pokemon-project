@@ -43,5 +43,14 @@ services:
     depends_on:
       - app # Nginx waits for the app to start
 
+  restate:
+    image: docker.io/restatedev/restate:latest
+    container_name: pokemon-restate
+    ports:
+      - "8080:8080"
+      - "9070:9070"
+    depends_on:
+      - app
+
 volumes:
     mysql_data:

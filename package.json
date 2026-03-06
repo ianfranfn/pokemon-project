@@ -22,6 +22,8 @@
     "supertest": "^7.1.4"
   },
   "dependencies": {
+    "@restatedev/restate-sdk": "^1.10.4",
+    "@restatedev/restate-sdk-clients": "^1.10.4",
     "@sentry/node": "^7.120.4",
     "@sentry/tracing": "^7.120.4",
     "axios": "^1.13.2",
