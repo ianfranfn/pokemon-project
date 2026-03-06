@@ -33,8 +33,6 @@ export const registerHandler = async (req, res) => {
         logger.error('Registration error:', error) // Logging the error for debugging, now with logger.
         return res.status(500).json({ error: 'Internal server error' })
     }
-
-
 }
 
 

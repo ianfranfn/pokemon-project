@@ -1,9 +1,6 @@
 import 'dotenv/config' // Load the variables from .env into process.env
 import express from 'express'
-import * as restate from "@restatedev/restate-sdk";
-import { emailService } from "./src/tasks/email.task.js";
 import cors from 'cors'
-import * as clients from "@restatedev/restate-sdk-clients";
 import * as Sentry from '@sentry/node'
 import router from './routes/auth.routes.js'
 import swaggerUi from 'swagger-ui-express'
@@ -22,8 +19,6 @@ app.use(Sentry.Handlers.tracingHandler()) // Sentry tracing handler middleware
 app.use(cors())
 app.use(express.json()) // Middleware to parse JSON bodies
 app.use(express.urlencoded({ extended: true }))
-
-restate.endpoint().bind(emailService).listen(9080);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs))
 
