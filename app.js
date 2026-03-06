@@ -20,7 +20,6 @@ app.use(cors())
 app.use(express.json()) // Middleware to parse JSON bodies
 app.use(express.urlencoded({ extended: true }))
 
-
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs))
 
 app.use('/', router) // Using the auth routes   

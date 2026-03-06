@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken'
 import bcrypt from "bcryptjs"
 import logger from '../utils/logger.js'
 import * as Sentry from '@sentry/node'
+import * as clients from "@restatedev/restate-sdk-clients";
 import { UserModel } from "../models/user.model.js"
 
 export const registerHandler = async (req, res) => {
@@ -20,6 +21,12 @@ export const registerHandler = async (req, res) => {
         const passwordHash = await bcrypt.hash(password,salt)
         const newUser = await UserModel.create ({email, passwordHash})
         logger.info(`New user registered: ${newUser.email}`);
+        
+       if (process.env.NODE_ENV !== 'test') {
+            const rs = clients.connect({ url: "http://restate:8080" });
+            rs.serviceSendClient({ name: "EmailService" }).sendWelcomeEmail({ email: email })
+                .catch(err => console.error("Error enqueuing task in Restate:", err));
+        }
 
         return res.status(201).json ({ message: 'User registered successfully', userId: newUser.id })
     }
@@ -28,8 +35,6 @@ export const registerHandler = async (req, res) => {
         logger.error('Registration error:', error) // Logging the error for debugging, now with logger.
         return res.status(500).json({ error: 'Internal server error' })
     }
-
-
 }
 
 
