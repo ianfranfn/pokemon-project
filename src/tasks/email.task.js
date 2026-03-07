@@ -24,7 +24,7 @@ export const emailService = restate.service({
             }
 
             try {
-                // Ejecutamos el envío
+              // executes the send
                 const info = await transporter.sendMail(mailOptions);
                 console.log(`[Email Task] Actual email sent! Recipient: ${email} - Response: ${info.response}`);
             } catch (error) {

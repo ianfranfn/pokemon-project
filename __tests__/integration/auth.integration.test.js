@@ -75,7 +75,6 @@ describe('Auth Integration Tests - /login', () => {
 
             expect(response.status).toBe(201);
             
-            // Verificación crucial: el controlador llamó a la conexión de Restate
             const mockConnect = clients.connect;
             expect(mockConnect).toHaveBeenCalledWith({ url: "http://restate:8080" });
         })
