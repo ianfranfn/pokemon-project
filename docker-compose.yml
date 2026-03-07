@@ -12,6 +12,8 @@ services:
       - DB_NAME=${DB_NAME}
       - JWT_SECRET=${JWT_SECRET}
       - SENTRY_DSN=${SENTRY_DSN}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
     depends_on:
       mysql-db: # Ensure the database starts before the app
         condition: service_healthy # Waits for it to be healthy
