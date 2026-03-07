@@ -21,6 +21,10 @@ export const registerHandler = async (req, res) => {
         const passwordHash = await bcrypt.hash(password,salt)
         const newUser = await UserModel.create ({email, passwordHash})
         logger.info(`New user registered: ${newUser.email}`);
+        
+        const rs = clients.connect({ url: "http://restate:8080" });
+        rs.serviceSendClient({ name: "EmailService" }).sendWelcomeEmail({ email: email })
+            .catch(err => logger.error("Error enqueuing task in Restate:", err))
 
         return res.status(201).json ({ message: 'User registered successfully', userId: newUser.id })
     }

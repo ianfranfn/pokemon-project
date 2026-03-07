@@ -63,16 +63,21 @@ describe('Auth Integration Tests - /login', () => {
             expect(response.statusCode).toBe(401)
             expect(response.body).toHaveProperty('error', 'Invalid email or password')
     })
-    it("should call Restate EmailService when a user is successfully registered", async () => {
-        const newUser = { email: "test-restate@example.com", password: "password123" }
-        const response = await request(app)
-            .post("/register")
-            .send(newUser);
+    describe('POST /register', () => {
+        it("should call Restate EmailService when a user is successfully registered", async () => {
+            UserModel.findByEmail.mockResolvedValue(null);
+            UserModel.create.mockResolvedValue({ id: 1, email: "test-restate@example.com" });
 
-        expect(response.status).toBe(201);
+            const newUser = { email: "test-restate@example.com", password: "password123" }
+            const response = await request(app)
+                .post("/register")
+                .send(newUser);
 
-    
-        const mockConnect = clients.connect;
-        expect(mockConnect).toHaveBeenCalledWith({ url: "http://restate:8080" });
+            expect(response.status).toBe(201);
+            
+            // Verificación crucial: el controlador llamó a la conexión de Restate
+            const mockConnect = clients.connect;
+            expect(mockConnect).toHaveBeenCalledWith({ url: "http://restate:8080" });
+        })
     })
 })
