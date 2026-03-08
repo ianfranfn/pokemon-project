@@ -4,6 +4,7 @@ import { UserModel } from '../../models/user.model.js'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { createMockUser } from '../helpers/mockFactories.js'
+import * as clients from "@restatedev/restate-sdk-clients"
 
 jest.mock('bcryptjs')
 jest.mock('jsonwebtoken')
@@ -12,6 +13,13 @@ jest.mock('../../models/user.model.js', () => ({
         findByEmail: jest.fn(),
         create: jest.fn()
     }
+}))
+jest.mock("@restatedev/restate-sdk-clients", () => ({
+    connect: jest.fn().mockReturnValue({
+        serviceSendClient: jest.fn().mockReturnValue({
+            sendWelcomeEmail: jest.fn().mockResolvedValue({ invocationId: "test-id" })
+        })
+    })
 }))
 
 describe('Auth Integration Tests - /login', () => {
@@ -26,7 +34,7 @@ describe('Auth Integration Tests - /login', () => {
         })
     })
 
-    it('shoudl return 200 and JWT token on successful login (integration)', async () => {
+    it('should return 200 and JWT token on successful login (integration)', async () => {
         UserModel.findByEmail.mockResolvedValue(mockUser)
         bcrypt.compare.mockResolvedValue(true)
         jwt.sign.mockReturnValue('mocked_jwt_token')
@@ -54,5 +62,21 @@ describe('Auth Integration Tests - /login', () => {
 
             expect(response.statusCode).toBe(401)
             expect(response.body).toHaveProperty('error', 'Invalid email or password')
+    })
+    describe('POST /register', () => {
+        it("should call Restate EmailService when a user is successfully registered", async () => {
+            UserModel.findByEmail.mockResolvedValue(null);
+            UserModel.create.mockResolvedValue({ id: 1, email: "test-restate@example.com" });
+
+            const newUser = { email: "test-restate@example.com", password: "password123" }
+            const response = await request(app)
+                .post("/register")
+                .send(newUser);
+
+            expect(response.status).toBe(201);
+            
+            const mockConnect = clients.connect;
+            expect(mockConnect).toHaveBeenCalledWith({ url: "http://restate:8080" });
+        })
     })
 })
