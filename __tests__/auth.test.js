@@ -8,6 +8,12 @@ jest.mock('../models/pokemon.model.js', () => ({
     create: jest.fn(),
   }
 }))
+jest.mock('../models/emailLog.model.js', () => ({
+    EmailLogModel: {
+        create: jest.fn().mockResolvedValue(1),
+        updateStatus: jest.fn().mockResolvedValue(true)
+    }
+}))
 jest.mock('../models/user.model.js', () => ({
   UserModel: {
     findByEmail: jest.fn(),
@@ -50,7 +56,7 @@ describe('Auth Controller - Unit Tests', () => {
     // A fake user that the DB will "return"
     mockUser = createMockUser({
       email: 'test@user.com',
-      password_hash: 'hash_super_secreto'
+      password_hash: 'hash_secret'
     })
   })
 
@@ -61,15 +67,15 @@ describe('Auth Controller - Unit Tests', () => {
     // Fake that the password DOES match
     bcrypt.compare.mockResolvedValue(true)
     // Fake that the token is signed
-    jwt.sign.mockReturnValue('mi.token.falso.jwt')
+    jwt.sign.mockReturnValue('fake_token.jwt')
 
     // Call the function (the "Handler") directly
     await loginHandler(mockReq, mockRes)
 
     // Check the results
     expect(UserModel.findByEmail).toHaveBeenCalledWith('test@user.com')
-    expect(bcrypt.compare).toHaveBeenCalledWith('123456', 'hash_super_secreto')
-    expect(mockRes.json).toHaveBeenCalledWith({ accessToken: 'mi.token.falso.jwt' })
+    expect(bcrypt.compare).toHaveBeenCalledWith('123456', 'hash_secret')
+    expect(mockRes.json).toHaveBeenCalledWith({ accessToken: 'fake_token.jwt' })
   })
 
   it('should return 401 if user is not found', async () => {
@@ -96,7 +102,7 @@ describe('Auth Controller - Unit Tests', () => {
 
     // Check
     expect(UserModel.findByEmail).toHaveBeenCalledWith('test@user.com')
-    expect(bcrypt.compare).toHaveBeenCalledWith('123456', 'hash_super_secreto')
+    expect(bcrypt.compare).toHaveBeenCalledWith('123456', 'hash_secret')
     expect(mockRes.status).toHaveBeenCalledWith(401);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Invalid email or password' })
   })
