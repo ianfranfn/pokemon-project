@@ -35,7 +35,8 @@ jobs:
           script_stop: true
           script: |
             cd pokemon-project
+
+            docker system prune -a -f
             
             make start
             
-            docker image prune -f
