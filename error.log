@@ -7,3 +7,5 @@
 {"level":"error","message":"Error fetching Pokemons:"}
 {"level":"error","message":"Error verifying token:"}
 {"level":"error","message":"Error fetching Pokemons:"}
+{"cause":{"code":"ENOTFOUND","errno":-3008,"hostname":"restate","syscall":"getaddrinfo"},"level":"error","message":"Error enqueuing task in Restate: fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13178:13\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at doComponentInvocation (C:\\Users\\Ian\\Desktop\\programacion\\proyecto-pokemon\\node_modules\\@restatedev\\restate-sdk-clients\\dist\\ingress.cjs:79:23)"}
+{"cause":{"code":"ENOTFOUND","errno":-3008,"hostname":"restate","syscall":"getaddrinfo"},"level":"error","message":"Error enqueuing task in Restate: fetch failed","stack":"TypeError: fetch failed\n    at node:internal/deps/undici/undici:13178:13\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at doComponentInvocation (C:\\Users\\Ian\\Desktop\\programacion\\proyecto-pokemon\\node_modules\\@restatedev\\restate-sdk-clients\\dist\\ingress.cjs:79:23)"}

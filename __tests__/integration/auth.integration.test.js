@@ -14,6 +14,12 @@ jest.mock('../../models/user.model.js', () => ({
         create: jest.fn()
     }
 }))
+jest.mock('../../models/emailLog.model.js', () => ({
+    EmailLogModel: {
+        create: jest.fn().mockResolvedValue(1),
+        updateStatus: jest.fn().mockResolvedValue(true)
+    }
+}))
 jest.mock("@restatedev/restate-sdk-clients", () => ({
     connect: jest.fn().mockReturnValue({
         serviceSendClient: jest.fn().mockReturnValue({
