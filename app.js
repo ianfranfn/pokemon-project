@@ -26,4 +26,4 @@ app.use('/', router) // Using the auth routes
 
 app.use(Sentry.Handlers.errorHandler()) // Sentry error handler middleware
 
-export { app } // Exporting the app for testing purposes
+export { app } // Exporting the app for testing purposes 
