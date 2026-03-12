@@ -9,7 +9,13 @@ export const emailService = restate.service({
     name: "EmailService",
     handlers: {
         sendWelcomeEmail: async (ctx, data) => {
-            const { email } = data;
+            const { email, logId } = data;
+
+            const startedAt = new Date();
+            await ctx.run("update-start-status", () =>
+                EmailLogModel.updateStatus(logId, 'pending', startedAt, null)
+            );
+
             await ctx.sleep(5000);
 
             const transporter = nodemailer.createTransport({
@@ -18,25 +24,32 @@ export const emailService = restate.service({
                     user: process.env.EMAIL_USER,
                     pass: process.env.EMAIL_PASS
                 }
-            })
+            });
 
             const mailOptions = {
                 from: process.env.EMAIL_USER,
                 to: email,
-                subject: 'Welcome to the Pokémon world!',
+                subject: 'Welcome to the world of Pokémon!',
                 text: `Hello! Your registration was successful with the email ${email}.`
-            }
+            };
 
             try {
-              // executes the send
                 const info = await transporter.sendMail(mailOptions);
-                console.log(`[Email Task] Actual email sent! Recipient: ${email} - Response: ${info.response}`);
+                logger.info(`[Email Task] Email sent. Recipient: ${email} - Reply: ${info.response}`);
+                const completedAt = new Date();
+                await ctx.run("update-success-status", () =>
+                    EmailLogModel.updateStatus(logId, 'sent', startedAt, completedAt)
+                );
+
             } catch (error) {
-                console.error(`[Email Task] Fatal error sending email to ${email}:`, error);
+                logger.error(`[Email Task] Fatal error sending email to ${email}:`, error);
+
+                const completedAt = new Date();
+                await ctx.run("update-error-status", () =>
+                    EmailLogModel.updateStatus(logId, 'error', startedAt, completedAt)
+                );
             }
-            
-            console.log(`[Email Task] Welcome email successfully sent to: ${email}`);
-            
+
             return true;
         },
     },
