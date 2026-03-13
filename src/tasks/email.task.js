@@ -4,6 +4,7 @@ import * as cheerio from "cheerio"
 import axios from "axios"
 import logger from "../../utils/logger.js";
 import { EmailLogModel } from "../../models/emailLog.model.js";
+import { getWelcomeEmailHtml } from '../../templates/welcome.template.js';
 
 export const emailService = restate.service({
     name: "EmailService",
@@ -30,7 +31,7 @@ export const emailService = restate.service({
                 from: process.env.EMAIL_USER,
                 to: email,
                 subject: 'Welcome to the world of Pokémon!',
-                text: `Hello! Your registration was successful with the email ${email}.`
+                html: getWelcomeEmailHtml(email)
             };
 
             try {
