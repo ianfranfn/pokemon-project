@@ -3,12 +3,13 @@ import { updatePokemonHandler, deletePokemonHandler, getPokemonHandler } from '.
 import { loginHandler, registerHandler, triggerScrapeHandler } from '../controllers/auth.controller.js'
 import { validateRegistration } from '../middleware/validation.middleware.js'
 import { verifyToken } from '../middleware/auth.middleware.js'
+import { strictLimiter } from '../middleware/rateLimit.middleware.js';
 
 const router = express.Router()
 
-router.post('/login', loginHandler) // Route for user login
-router.post('/scrape', triggerScrapeHandler);
-router.post('/register', validateRegistration, registerHandler) // Route for user registration
+router.post('/login', strictLimiter, loginHandler) // Route for user login
+router.post('/scrape', strictLimiter, triggerScrapeHandler);
+router.post('/register', strictLimiter, validateRegistration, registerHandler) // Route for user registration
 
 router.get('/home', verifyToken, (req, res) => {
     res.send(`Welcome to the page, ${req.user.email}!`)
