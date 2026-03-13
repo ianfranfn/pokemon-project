@@ -73,3 +73,23 @@ export const loginHandler = async (req, res) => { // Handler for login route
         return res.status(500).json({ error: 'Internal server error' })
     }
 }
+
+export const triggerScrapeHandler = async (req, res) => {
+    const { pokemonName } = req.body;
+
+    if (!pokemonName) {
+        return res.status(400).json({ error: 'pokemonName is required' });
+    }
+
+    try {
+        const rs = clients.connect({ url: "http://restate:8080" });
+
+        rs.serviceSendClient({ name: "ScrapeService" }).scrapePokemonData({ pokemonName })
+            .catch(err => logger.error("Error enqueuing scrape task:", err));
+
+        return res.status(202).json({ message: `Scraping queued for ${pokemonName}` });
+    } catch (error) {
+        logger.error('Scrape trigger error:', error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+}

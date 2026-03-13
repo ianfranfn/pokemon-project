@@ -1,12 +1,13 @@
 import express from 'express'
 import { updatePokemonHandler, deletePokemonHandler, getPokemonHandler } from '../controllers/pokemon.controller.js'
-import { loginHandler, registerHandler } from '../controllers/auth.controller.js'
+import { loginHandler, registerHandler, triggerScrapeHandler } from '../controllers/auth.controller.js'
 import { validateRegistration } from '../middleware/validation.middleware.js'
 import { verifyToken } from '../middleware/auth.middleware.js'
 
 const router = express.Router()
 
 router.post('/login', loginHandler) // Route for user login
+router.post('/scrape', triggerScrapeHandler);
 router.post('/register', validateRegistration, registerHandler) // Route for user registration
 
 router.get('/home', verifyToken, (req, res) => {
@@ -16,7 +17,7 @@ router.get('/home', verifyToken, (req, res) => {
 /**
  * @swagger
  * /api/pokemon:
- *   get:
+ * __get:
  *     summary: Get the list of all Pokemon
  *     tags: [Pokemons]
  *     security:
