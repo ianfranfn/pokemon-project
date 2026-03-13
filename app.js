@@ -5,6 +5,7 @@ import * as Sentry from '@sentry/node'
 import router from './routes/auth.routes.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerSpecs from './config/swagger.js'
+import { globalLimiter } from './middleware/rateLimit.middleware.js'
 
 const app = express()
 
@@ -19,6 +20,8 @@ app.use(Sentry.Handlers.tracingHandler()) // Sentry tracing handler middleware
 app.use(cors())
 app.use(express.json()) // Middleware to parse JSON bodies
 app.use(express.urlencoded({ extended: true }))
+
+app.use(globalLimiter) // Apply the global rate limiter to all routes
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs))
 
