@@ -1,4 +1,5 @@
 import swaggerJsdoc from 'swagger-jsdoc'
+const path = require('path');
 
 const options = {
     definition: {
