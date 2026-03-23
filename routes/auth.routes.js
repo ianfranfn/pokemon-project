@@ -7,15 +7,9 @@ import { strictLimiter } from '../middleware/rateLimit.middleware.js';
 
 const router = express.Router()
 
-<<<<<<< Updated upstream
 router.post('/login', strictLimiter, loginHandler) // Route for user login
 router.post('/scrape', strictLimiter, triggerScrapeHandler);
 router.post('/register', strictLimiter, validateRegistration, registerHandler) // Route for user registration
-=======
-router.post('/login', loginHandler) // Route for user login
-router.post('/scrape', triggerScrapeHandler);
-router.post('/register', validateRegistration, registerHandler) // Route for user registration
->>>>>>> Stashed changes
 
 router.get('/home', verifyToken, (req, res) => {
     res.send(`Welcome to the page, ${req.user.email}!`)
