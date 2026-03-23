@@ -33,7 +33,10 @@ const options = {
             },
         ],
     },
-    apis: ['./routes/auth.routes.js'],
+    apis: [
+    path.join(__dirname, '../routes/*.js'),
+    path.join(__dirname, '../controllers/*.js') 
+  ],
 }
 
 const specs = swaggerJsdoc(options)
