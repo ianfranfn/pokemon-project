@@ -9,7 +9,6 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="es">
-      {/* Aplicamos la fuente abstracta a toda la app */}
       <body className="bg-gray-100 font-primary antialiased">
         <Navbar />
         {children}
