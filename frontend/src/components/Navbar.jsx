@@ -1,12 +1,22 @@
+'use client';
+
+import Link from 'next/link';
 import Logo from './Logo';
 import SearchIcon from './SearchIcon';
+import { usePathname } from 'next/navigation';
 
 export default function Navbar() {
+  const pathname = usePathname();
+  const isAuthPage = pathname === '/login' || pathname === '/register';
+
   return (
     <nav className="bg-gray-900 shadow-lg sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex justify-between items-center h-16">
+
           <Logo />
+
+        {!isAuthPage && (
           <div className="flex-1 max-w-lg mx-8 hidden md:block">
             <div className="relative">
               <input
@@ -19,13 +29,14 @@ export default function Navbar() {
               </button>
             </div>
           </div>
+        )}
           <div className="flex items-center space-x-4">
-            <button className="text-gray-300 hover:text-white text-sm font-semibold transition-colors">
+            <Link href="/login" className="text-gray-300 hover:text-white text-sm font-semibold transition-colors">
               Log In
-            </button>
-            <button className="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold py-2 px-5 rounded-full transition-colors shadow-md">
+            </Link>
+            <Link href="/register" className="bg-red-500 hover:bg-red-600 text-white text-sm font-semibold py-2 px-5 rounded-full transition-colors shadow-md">
               Sign Up
-            </button>
+            </Link>
           </div>
 
         </div>
