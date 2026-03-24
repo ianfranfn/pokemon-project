@@ -9,7 +9,7 @@ const router = express.Router()
 
 /**
  * @swagger
- * /login:
+ * /api/auth/login:
  *   post:
  *     summary: Log in to an existing user account
  *     tags: [Auth]
@@ -34,7 +34,7 @@ router.post('/scrape', strictLimiter, triggerScrapeHandler);
 
 /**
  * @swagger
- * /register:
+ * /api/auth/register:
  *   post:
  *     summary: Register a new user account
  *     tags: [Auth]
