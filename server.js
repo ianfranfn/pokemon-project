@@ -6,7 +6,7 @@ import * as restate from "@restatedev/restate-sdk";
 import { emailService } from "./src/tasks/email.task.js"
 import { scrapeService } from "./src/tasks/email.task.js"
 
-const port = config.port || 3000 // Use the port from environment variables or default to 3000
+const port = config.env.PORT || 4000 // Use the port from environment variables or default to 4000
 
 app.listen(port, () => {
     logger.info(`server listening in http://localhost:${port}`)
