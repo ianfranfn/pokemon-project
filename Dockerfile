@@ -12,8 +12,8 @@ RUN npm ci
 # Bundle app source
 COPY . .
 
-# Make port 3000 available to the world outside this container
-ARG PORT=3000
+# Make port 4000 available to the world outside this container
+ARG PORT=4000
 ENV PORT $PORT
 EXPOSE $PORT
 
