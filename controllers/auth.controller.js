@@ -6,11 +6,25 @@ import * as Sentry from '@sentry/node'
 import * as clients from "@restatedev/restate-sdk-clients";
 import { UserModel } from "../models/user.model.js"
 import { EmailLogModel } from "../models/emailLog.model.js"
+import { PokemonModel } from "../models/pokemon.model.js";
 
 export const registerHandler = async (req, res) => {
-    const { email, password } = req.body // validating inputs
-    if (!email || !password) {
-        return res.status(400).json({ error: 'Email and password are required for registration' })
+    const { email, password, nickname } = req.body;
+
+    if (!email || !password || !nickname) {
+        return res.status(400).json({ error: 'Email, password, and nickname are required for registration' });
+    }
+
+    if (!validateEmail(email)) {
+        return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    if (password.length < 6) {
+        return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    }
+
+    if (nickname.length < 3 || nickname.length > 20) {
+        return res.status(400).json({ error: 'Nickname must be between 3 and 20 characters long' });
     } 
 
     try {
@@ -18,10 +32,40 @@ export const registerHandler = async (req, res) => {
         if (existingUser) {
             return res.status(409).json({ error: 'User already exists' })
         }
+
+        const existingNickname = await UserModel.findByNickname(nickname);
+        if (existingNickname) {
+            return res.status(409).json({ error: 'Nickname is already taken. Please choose another one.' });
+        }
+
         const salt = await bcrypt.genSalt(10) // Generating a salt for hashing
         const passwordHash = await bcrypt.hash(password,salt)
-        const newUser = await UserModel.create ({email, passwordHash})
-        logger.info(`New user registered: ${newUser.email}`);
+        const newUser = await UserModel.create ({email, passwordHash, nickname})
+        logger.info(`New user registered: ${newUser.email} with nickname: ${newUser.nickname}`);
+
+        const starterPokemons = [
+            {
+                name: 'Bulbasaur',
+                type: 'Grass/Poison',
+                image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png'
+            },
+            {
+                name: 'Charmander',
+                type: 'Fire',
+                image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png'
+            }
+        ];
+
+        try {
+
+            for (const pkm of starterPokemons) {
+                await PokemonModel.addPokemonToUser(newUser.id, pkm);
+            }
+            logger.info(`Starter Pokemons assigned successfully to user ID: ${newUser.id}`);
+        } catch (pkmError) {
+            logger.error('Error assigning starter Pokemons:', pkmError);
+            Sentry.captureException(pkmError);
+        }
 
         const logId = await EmailLogModel.create(email);
 

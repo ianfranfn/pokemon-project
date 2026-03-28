@@ -38,5 +38,17 @@ export class PokemonModel {
         const [result] = await pool.query(sql, [id])
         return result.affectedRows > 0
     }
+
+    static async addPokemonToUser(userId, pokemonData) {
+        const pool = getPool();
+        const { name, type, image } = pokemonData;
+        
+        const [result] = await pool.execute(
+            'INSERT INTO pokemons (name, type, image, user_id) VALUES (?, ?, ?, ?)',
+            [name, type, image, userId]
+        );
+        
+        return result.insertId;
+    }
 }
 
