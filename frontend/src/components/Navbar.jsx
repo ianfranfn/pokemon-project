@@ -7,7 +7,10 @@ import { usePathname } from 'next/navigation';
 
 export default function Navbar() {
   const pathname = usePathname();
-  const isAuthPage = pathname === '/login' || pathname === '/register';
+  
+  const isLoginPage = pathname === '/login';
+  const isRegisterPage = pathname === '/register';
+  const isAuthPage = isLoginPage || isRegisterPage;
 
   return (
     <nav className="bg-gray-900 shadow-lg sticky top-0 z-50">
