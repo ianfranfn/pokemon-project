@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -13,7 +13,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-const handleEmailChange = (e) => setEmail(e.target.value);
+  const handleEmailChange = (e) => setEmail(e.target.value);
   const handlePasswordChange = (e) => setPassword(e.target.value);
 
   const handleSubmit = async (e) => {
@@ -34,7 +34,6 @@ const handleEmailChange = (e) => setEmail(e.target.value);
   return (
     <main className="min-h-[calc(100vh-64px)] flex items-center justify-center p-4">
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
-        
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4 bg-gray-900 p-3 rounded-xl inline-block">
             <Logo />
@@ -94,7 +93,10 @@ const handleEmailChange = (e) => setEmail(e.target.value);
 
         <p className="text-center text-gray-600 text-sm mt-8">
           Already have an account?{' '}
-          <Link href="/login" className="text-red-500 hover:text-red-600 font-semibold transition-colors">
+          <Link
+            href="/login"
+            className="text-red-500 hover:text-red-600 font-semibold transition-colors"
+          >
             Log in
           </Link>
         </p>

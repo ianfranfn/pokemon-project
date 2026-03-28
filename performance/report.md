@@ -4,7 +4,7 @@ Date: 08/02/2026
 Tool: K6
 Result: 13,000 requests in 3.5 minutes, no errors.
 
-  █ TOTAL RESULTS
+█ TOTAL RESULTS
 
     checks_total.......: 27482  130.124367/s
     checks_succeeded...: 99.89% 27454 out of 27482
@@ -23,8 +23,8 @@ Result: 13,000 requests in 3.5 minutes, no errors.
     EXECUTION
     iteration_duration.............: avg=1.21s    min=1.17s   med=1.2s     max=2.12s p(90)=1.25s    p(95)=1.29s
     iterations.....................: 13741  65.062183/s
-    vus............................: 1      min=1          max=199  
-    vus_max........................: 200    min=200        max=200  
+    vus............................: 1      min=1          max=199
+    vus_max........................: 200    min=200        max=200
 
     NETWORK
     data_received..................: 5.9 MB 28 kB/s
@@ -32,6 +32,7 @@ Result: 13,000 requests in 3.5 minutes, no errors.
 
 
 
-                                                                    
-running (3m31.2s), 000/200 VUs, 13741 complete and 0 interrupted iterations                                                             
-default ✓ [====================================] 000/200 VUs  3m30s
+
+
+running (3m31.2s), 000/200 VUs, 13741 complete and 0 interrupted iterations  
+default ✓ [====================================] 000/200 VUs 3m30s
