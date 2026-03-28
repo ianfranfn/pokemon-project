@@ -8,6 +8,14 @@ import { UserModel } from "../models/user.model.js"
 import { EmailLogModel } from "../models/emailLog.model.js"
 import { PokemonModel } from "../models/pokemon.model.js";
 
+const validateEmail = (email) => {
+    return String(email)
+        .toLowerCase()
+        .match(
+            /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+        );
+};
+
 export const registerHandler = async (req, res) => {
     const { email, password, nickname } = req.body;
 

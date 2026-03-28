@@ -5,12 +5,14 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { createMockUser } from '../helpers/mockFactories.js'
 import * as clients from "@restatedev/restate-sdk-clients"
+import { PokemonModel } from '../../models/pokemon.model.js'
 
 jest.mock('bcryptjs')
 jest.mock('jsonwebtoken')
 jest.mock('../../models/user.model.js', () => ({
     UserModel: {
         findByEmail: jest.fn(),
+        findByNickname: jest.fn(),
         create: jest.fn()
     }
 }))
@@ -26,6 +28,12 @@ jest.mock("@restatedev/restate-sdk-clients", () => ({
             sendWelcomeEmail: jest.fn().mockResolvedValue({ invocationId: "test-id" })
         })
     })
+}))
+
+jest.mock('../../models/pokemon.model.js', () => ({
+    PokemonModel: {
+        addPokemonToUser: jest.fn()
+    }
 }))
 
 describe('Auth Integration Tests - /login', () => {
@@ -72,9 +80,11 @@ describe('Auth Integration Tests - /login', () => {
     describe('POST /register', () => {
         it("should call Restate EmailService when a user is successfully registered", async () => {
             UserModel.findByEmail.mockResolvedValue(null);
+            UserModel.findByNickname.mockResolvedValue(null)
             UserModel.create.mockResolvedValue({ id: 1, email: "test-restate@example.com" });
+            PokemonModel.addPokemonToUser.mockResolvedValue(1);
 
-            const newUser = { email: "test-restate@example.com", password: "password123" }
+            const newUser = { email: "test-restate@example.com", password: "password123", nickname: "Red" }
             const response = await request(app)
                 .post("/register")
                 .send(newUser);

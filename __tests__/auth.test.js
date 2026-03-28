@@ -6,6 +6,7 @@ jest.mock('../models/pokemon.model.js', () => ({
     update: jest.fn(),
     delete: jest.fn(),
     create: jest.fn(),
+    addPokemonToUser: jest.fn(),
   }
 }))
 jest.mock('../models/emailLog.model.js', () => ({
@@ -17,6 +18,7 @@ jest.mock('../models/emailLog.model.js', () => ({
 jest.mock('../models/user.model.js', () => ({
   UserModel: {
     findByEmail: jest.fn(),
+    findByNickname: jest.fn(),
     create: jest.fn()
   }
 }))
@@ -117,7 +119,7 @@ describe('Auth Controller - Register Unit Tests', () => { // New test suite for 
     beforeEach(() => { // Reset before each test
         jest.clearAllMocks()
         mockReq = {
-            body: { email: testEmail, password: testPassword }
+            body: { email: testEmail, password: testPassword, nickname: 'AshKetchum' }
         }
         mockRes = {
             status: jest.fn(() => mockRes),
@@ -126,12 +128,14 @@ describe('Auth Controller - Register Unit Tests', () => { // New test suite for 
     })
     it('should return 201 and success message on successful registration', async () => { // Test successful registration
         UserModel.findByEmail.mockResolvedValue(null)
+        UserModel.findByNickname.mockResolvedValue(null)
         bcrypt.hash.mockResolvedValue('hashed_password')
         UserModel.create.mockResolvedValue({ id: 2, email: testEmail })
+        PokemonModel.addPokemonToUser.mockResolvedValue(1)
 
         await registerHandler(mockReq, mockRes)
 
-        expect(UserModel.create).toHaveBeenCalledWith({ email: testEmail, passwordHash: 'hashed_password' })
+        expect(UserModel.create).toHaveBeenCalledWith({ email: testEmail, passwordHash: 'hashed_password', nickname: 'AshKetchum' })
         expect(mockRes.status).toHaveBeenCalledWith(201)
         expect(mockRes.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'User registered successfully' }))
     })
@@ -153,7 +157,7 @@ describe('Auth Controller - Register Unit Tests', () => { // New test suite for 
         await registerHandler(mockReq, mockRes)
 
         expect(mockRes.status).toHaveBeenCalledWith(400)
-        expect(mockRes.json).toHaveBeenCalledWith({ error: 'Email and password are required for registration' })
+        expect(mockRes.json).toHaveBeenCalledWith({ error: 'Email, password, and nickname are required for registration' })
     })
 })
 
