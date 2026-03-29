@@ -16,22 +16,22 @@ export default function PokemonCard({ number, name, types, image }) {
   return (
     <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden cursor-pointer">
       <div className="bg-gray-100 p-6 flex justify-center items-center h-48">
-        <img 
-          src={image} 
-          alt={name} 
+        <img
+          src={image}
+          alt={name}
           className="h-full object-contain drop-shadow-lg hover:scale-110 transition-transform duration-300"
         />
       </div>
-      
+
       {/* Pokemon info */}
       <div className="p-4">
         <p className="text-sm text-gray-400 font-bold mb-1">N.º {number}</p>
         <h2 className="text-xl font-bold text-gray-800 capitalize mb-3">{name}</h2>
-        
+
         <div className="flex gap-2">
           {types.map((type, index) => (
-            <span 
-              key={index} 
+            <span
+              key={index}
               className={`${getTypeColor(type)} text-white text-xs px-3 py-1 rounded-md font-semibold w-full text-center`}
             >
               {type}

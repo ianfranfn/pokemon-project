@@ -1,9 +1,9 @@
-import "./globals.css";
-import Navbar from "../components/Navbar";
+import './globals.css';
+import Navbar from '../components/Navbar';
 
 export const metadata = {
-  title: "Pokédex Pro",
-  description: "La API de Pokémon de alto rendimiento",
+  title: 'Pokédex Pro',
+  description: 'La API de Pokémon de alto rendimiento',
 };
 
 export default function RootLayout({ children }) {

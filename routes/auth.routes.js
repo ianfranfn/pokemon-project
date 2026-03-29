@@ -1,11 +1,19 @@
-import express from 'express'
-import { updatePokemonHandler, deletePokemonHandler, getPokemonHandler } from '../controllers/pokemon.controller.js'
-import { loginHandler, registerHandler, triggerScrapeHandler } from '../controllers/auth.controller.js'
-import { validateRegistration } from '../middleware/validation.middleware.js'
-import { verifyToken } from '../middleware/auth.middleware.js'
+import express from 'express';
+import {
+  updatePokemonHandler,
+  deletePokemonHandler,
+  getPokemonHandler,
+} from '../controllers/pokemon.controller.js';
+import {
+  loginHandler,
+  registerHandler,
+  triggerScrapeHandler,
+} from '../controllers/auth.controller.js';
+import { validateRegistration } from '../middleware/validation.middleware.js';
+import { verifyToken } from '../middleware/auth.middleware.js';
 import { strictLimiter } from '../middleware/rateLimit.middleware.js';
 
-const router = express.Router()
+const router = express.Router();
 
 /**
  * @swagger
@@ -29,7 +37,7 @@ const router = express.Router()
  *         description: Successfully logged in
  */
 
-router.post('/login', strictLimiter, loginHandler) // Route for user login
+router.post('/login', strictLimiter, loginHandler); // Route for user login
 router.post('/scrape', strictLimiter, triggerScrapeHandler);
 
 /**
@@ -54,11 +62,11 @@ router.post('/scrape', strictLimiter, triggerScrapeHandler);
  *         description: Account created successfully
  */
 
-router.post('/register', strictLimiter, validateRegistration, registerHandler) // Route for user registration
+router.post('/register', strictLimiter, validateRegistration, registerHandler); // Route for user registration
 
 router.get('/home', verifyToken, (req, res) => {
-    res.send(`Welcome to the page, ${req.user.email}!`)
-})
+  res.send(`Welcome to the page, ${req.user.email}!`);
+});
 
 /**
  * @swagger
@@ -125,9 +133,8 @@ router.get('/home', verifyToken, (req, res) => {
  *         description: Not authorized (Token Missing)
  */
 
+router.get('/api/pokemon', verifyToken, getPokemonHandler);
+router.put('/api/pokemon/:id', verifyToken, updatePokemonHandler);
+router.delete('/api/pokemon/:id', verifyToken, deletePokemonHandler);
 
-router.get('/api/pokemon', verifyToken, getPokemonHandler)
-router.put('/api/pokemon/:id', verifyToken, updatePokemonHandler)
-router.delete('/api/pokemon/:id', verifyToken, deletePokemonHandler)
-
-export default router
+export default router;
