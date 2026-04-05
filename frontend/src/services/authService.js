@@ -1,12 +1,13 @@
-const API_URL = 'http://3.138.156.109';
+const API_URL = 'http://localhost:4000';
 
-export const register = async (email, password) => {
+export const register = async (email, password, nickname) => {
   const response = await fetch(`${API_URL}/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ email, password }),
+
+    body: JSON.stringify({ email, password, nickname }),
   });
 
   const data = await response.json();
@@ -18,13 +19,13 @@ export const register = async (email, password) => {
   return data;
 };
 
-export const login = async (email, password) => {
+export const login = async (identifier, password) => {
   const response = await fetch(`${API_URL}/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ identifier, password }),
   });
 
   const data = await response.json();

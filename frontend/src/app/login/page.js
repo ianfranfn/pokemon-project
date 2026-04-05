@@ -8,12 +8,12 @@ import { login } from '../../services/authService';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleEmailChange = (e) => setEmail(e.target.value);
+  const handleIdentifierChange = (e) => setIdentifier(e.target.value);
   const handlePasswordChange = (e) => setPassword(e.target.value);
 
   const handleSubmit = async (e) => {
@@ -22,7 +22,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login(email, password);
+      await login(identifier, password);
       router.push('/');
     } catch (err) {
       setError(err.message || 'Error logging in');
@@ -53,14 +53,14 @@ export default function LoginPage() {
         <form className="space-y-6" onSubmit={handleSubmit}>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="email">
-              Email
+              Email or Nickname
             </label>
             <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={handleEmailChange}
-              placeholder="trainer@pokemon.com"
+              id="identifier"
+              type="text"
+              value={identifier}
+              onChange={handleIdentifierChange}
+              placeholder="trainer@pokemon.com or your nickname"
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors outline-none"
               required
             />
