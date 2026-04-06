@@ -10,11 +10,13 @@ export default function RegisterPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [nickname, setNickname] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleEmailChange = (e) => setEmail(e.target.value);
   const handlePasswordChange = (e) => setPassword(e.target.value);
+  const handleNicknameChange = (e) => setNickname(e.target.value);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,7 +24,7 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      await register(email, password);
+      await register(email, password, nickname);
       router.push('/login');
     } catch (err) {
       setError(err.message || 'Error creating account');
@@ -49,6 +51,24 @@ export default function RegisterPage() {
         )}
 
         <form className="space-y-6" onSubmit={handleSubmit}>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="nickname">
+              Trainer Nickname
+            </label>
+            <input
+              id="nickname"
+              type="text"
+              value={nickname}
+              onChange={handleNicknameChange}
+              placeholder="e.g. AshKetchum"
+              minLength={3}
+              maxLength={20}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors outline-none"
+              required
+            />
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="email">
               Email
