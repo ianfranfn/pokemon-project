@@ -12,6 +12,7 @@ jest.mock('jsonwebtoken');
 jest.mock('../../models/user.model.js', () => ({
   UserModel: {
     findByIdentifier: jest.fn(),
+    findByEmail: jest.fn(),
     findByNickname: jest.fn(),
     create: jest.fn(),
   },
@@ -71,7 +72,7 @@ describe('Auth Integration Tests - /login', () => {
     });
 
     expect(response.statusCode).toBe(401);
-    expect(response.body).toHaveProperty('error', 'Invalid email or password');
+    expect(response.body).toHaveProperty('error', 'Invalid identifier or password');
   });
   describe('POST /register', () => {
     it('should call Restate EmailService when a user is successfully registered', async () => {
