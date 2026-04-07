@@ -17,7 +17,7 @@ jest.mock('../models/emailLog.model.js', () => ({
 }));
 jest.mock('../models/user.model.js', () => ({
   UserModel: {
-    findByEmail: jest.fn(),
+    findByIdentifier: jest.fn(),
     findByNickname: jest.fn(),
     create: jest.fn(),
   },
@@ -47,7 +47,7 @@ describe('Auth Controller - Unit Tests', () => {
     // Fake 'req' (request) object
     mockReq = {
       body: {
-        email: 'test@user.com',
+        identifier: 'test@user.com',
         password: '123456',
       },
     };
@@ -67,7 +67,7 @@ describe('Auth Controller - Unit Tests', () => {
 
   it('should return 200 and JWT token on successful login', async () => {
     // Fake that the user DOES exist
-    UserModel.findByEmail.mockResolvedValue(mockUser);
+    UserModel.findByIdentifier.mockResolvedValue(mockUser);
     // Fake that the password DOES match
     bcrypt.compare.mockResolvedValue(true);
     // Fake that the token is signed
@@ -77,26 +77,26 @@ describe('Auth Controller - Unit Tests', () => {
     await loginHandler(mockReq, mockRes);
 
     // Check the results
-    expect(UserModel.findByEmail).toHaveBeenCalledWith('test@user.com');
+    expect(UserModel.findByIdentifier).toHaveBeenCalledWith('test@user.com');
     expect(bcrypt.compare).toHaveBeenCalledWith('123456', 'hash_secret');
     expect(mockRes.json).toHaveBeenCalledWith({ accessToken: 'fake_token.jwt' });
   });
 
   it('should return 401 if user is not found', async () => {
     // Fake that the user does NOT exist
-    UserModel.findByEmail.mockResolvedValue(null);
+    UserModel.findByIdentifier.mockResolvedValue(null);
 
     // Call the handler
     await loginHandler(mockReq, mockRes);
 
-    expect(UserModel.findByEmail).toHaveBeenCalledWith('test@user.com');
+    expect(UserModel.findByIdentifier).toHaveBeenCalledWith('test@user.com');
     expect(mockRes.status).toHaveBeenCalledWith(401);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Invalid email or password' });
   });
 
   it('should return 401 if password does not match', async () => {
     // Fake that the user DOES exist
-    UserModel.findByEmail.mockResolvedValue(mockUser);
+    UserModel.findByIdentifier.mockResolvedValue(mockUser);
     // Fake that the password does NOT match
     bcrypt.compare.mockResolvedValue(false);
 
@@ -104,7 +104,7 @@ describe('Auth Controller - Unit Tests', () => {
     await loginHandler(mockReq, mockRes);
 
     // Check
-    expect(UserModel.findByEmail).toHaveBeenCalledWith('test@user.com');
+    expect(UserModel.findByIdentifier).toHaveBeenCalledWith('test@user.com');
     expect(bcrypt.compare).toHaveBeenCalledWith('123456', 'hash_secret');
     expect(mockRes.status).toHaveBeenCalledWith(401);
     expect(mockRes.json).toHaveBeenCalledWith({ error: 'Invalid email or password' });
@@ -153,7 +153,7 @@ describe('Auth Controller - Register Unit Tests', () => {
   it('should return 409 if the user already exists', async () => {
     // Test registration with existing email
     const existingUser = { id: 1, email: testEmail };
-    UserModel.findByEmail.mockResolvedValue(existingUser);
+    UserModel.findByIdentifier.mockResolvedValue(existingUser);
 
     await registerHandler(mockReq, mockRes);
 
