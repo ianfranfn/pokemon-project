@@ -23,6 +23,14 @@ jest.mock('../models/user.model.js', () => ({
     create: jest.fn(),
   },
 }));
+jest.mock('@restatedev/restate-sdk-clients', () => ({
+  connect: jest.fn().mockReturnValue({
+    serviceSendClient: jest.fn().mockReturnValue({
+      sendWelcomeEmail: jest.fn().mockResolvedValue({ invocationId: 'test-id' }),
+    }),
+  }),
+}))
+
 import { loginHandler, registerHandler } from '../controllers/auth.controller.js'; // Imports the function to test
 import { PokemonModel } from '../models/pokemon.model.js';
 import {
