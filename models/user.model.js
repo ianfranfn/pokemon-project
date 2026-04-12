@@ -13,6 +13,13 @@ export class UserModel {
     return rows[0];
   }
 
+  static async findByIdentifier(identifier) {
+    const pool = getPool();
+    const sql = 'SELECT * FROM users WHERE email = ? OR nickname = ?';
+    const [rows] = await pool.query(sql, [identifier, identifier]);
+    return rows[0];
+  }
+
   static async create({ email, passwordHash, nickname }) {
     const pool = getPool();
     const [result] = await pool.execute(

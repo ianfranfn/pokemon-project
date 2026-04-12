@@ -57,11 +57,13 @@ export const registerHandler = async (req, res) => {
 
     const starterPokemons = [
       {
+        pokemon_id: 1,
         name: 'Bulbasaur',
         type: 'Grass/Poison',
         image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png',
       },
       {
+        pokemon_id: 4,
         name: 'Charmander',
         type: 'Fire',
         image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png',
@@ -80,10 +82,14 @@ export const registerHandler = async (req, res) => {
 
     const logId = await EmailLogModel.create(email);
 
-    const rs = clients.connect({ url: 'http://restate:8080' });
+    const rs = clients.connect({ url: process.env.RESTATE_URL || 'http://127.0.0.1:8080' });
+    
     rs.serviceSendClient({ name: 'EmailService' })
       .sendWelcomeEmail({ email: email, logId: logId })
-      .catch((err) => logger.error('Error enqueuing task in Restate:', err));
+      .catch((err) => {
+        logger.error('Error enqueuing task in Restate:', err);
+        console.error(err.cause ? err.cause : err);
+      });
 
     return res.status(201).json({ message: 'User registered successfully', userId: newUser.id });
   } catch (error) {
@@ -95,26 +101,26 @@ export const registerHandler = async (req, res) => {
 
 export const loginHandler = async (req, res) => {
   // Handler for login route
-  const { email, password } = req.body; // validating inputs
-  if (!email || !password) {
-    return res.status(400).json({ error: 'email and password are required' });
+  const { identifier, password } = req.body; // validating inputs
+  if (!identifier || !password) {
+    return res.status(400).json({ error: 'Identifier and password are required' });
   }
 
   try {
-    const user = await UserModel.findByEmail(email);
+    const user = await UserModel.findByIdentifier(identifier);
     if (!user) {
-      logger.warn('Failed login: User not found for email', { email });
-      return res.status(401).json({ error: 'Invalid email or password' });
+      logger.warn('Failed login: User not found for identifier', { identifier });
+      return res.status(401).json({ error: 'Invalid identifier or password' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
 
     if (!isMatch) {
-      logger.warn('Failed login: Incorrect password for email', { email });
-      return res.status(401).json({ error: 'Invalid email or password' });
+      logger.warn('Failed login: Incorrect password for identifier', { identifier });
+      return res.status(401).json({ error: 'Invalid identifier or password' });
     }
 
-    const payload = { email: user.email, id: user.id }; // Information saved in the token if login is successful
+    const payload = { email: user.email, id: user.id, nickname: user.nickname }; // Information saved in the token if login is successful
     const accessToken = jwt.sign(payload, getJwtSecret(), { expiresIn: '1h' });
 
     res.json({ accessToken: accessToken });
@@ -132,7 +138,7 @@ export const triggerScrapeHandler = async (req, res) => {
   }
 
   try {
-    const rs = clients.connect({ url: 'http://restate:8080' });
+    const rs = clients.connect({ url: process.env.RESTATE_URL || 'http://localhost:8080' });
 
     rs.serviceSendClient({ name: 'ScrapeService' })
       .scrapePokemonData({ pokemonName })

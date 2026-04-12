@@ -54,5 +54,12 @@ services:
     depends_on:
       - app
 
+  restate-setup:
+    image: curlimages/curl
+    depends_on:
+      - restate
+    command: >
+      sh -c "sleep 5 && curl -X POST http://restate:9070/deployments -H 'Content-Type: application/json' -d '{\"uri\": \"http://host.docker.internal:9080\"}'"
+
 volumes:
   mysql_data:

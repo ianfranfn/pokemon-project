@@ -42,11 +42,11 @@ export class PokemonModel {
 
   static async addPokemonToUser(userId, pokemonData) {
     const pool = getPool();
-    const { name, type, image } = pokemonData;
+    const { pokemon_id, name, type, image } = pokemonData;
 
     const [result] = await pool.execute(
-      'INSERT INTO pokemons (name, type, image, user_id) VALUES (?, ?, ?, ?)',
-      [name, type, image, userId]
+      'INSERT INTO pokemons (pokemon_id, name, type, image, user_id) VALUES (?, ?, ?, ?, ?)',
+      [pokemon_id, name, type, image, userId]
     );
 
     return result.insertId;

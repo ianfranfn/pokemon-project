@@ -11,6 +11,7 @@ jest.mock('bcryptjs');
 jest.mock('jsonwebtoken');
 jest.mock('../../models/user.model.js', () => ({
   UserModel: {
+    findByIdentifier: jest.fn(),
     findByEmail: jest.fn(),
     findByNickname: jest.fn(),
     create: jest.fn(),
@@ -49,33 +50,33 @@ describe('Auth Integration Tests - /login', () => {
   });
 
   it('should return 200 and JWT token on successful login (integration)', async () => {
-    UserModel.findByEmail.mockResolvedValue(mockUser);
+    UserModel.findByIdentifier.mockResolvedValue(mockUser);
     bcrypt.compare.mockResolvedValue(true);
     jwt.sign.mockReturnValue('mocked_jwt_token');
 
     const response = await request(app).post('/login').send({
-      email: 'test@integration.com',
+      identifier: 'test@integration.com',
       password: 'password123',
     });
 
     expect(response.statusCode).toBe(200);
     expect(response.body).toHaveProperty('accessToken', 'mocked_jwt_token');
-    expect(UserModel.findByEmail).toHaveBeenCalledWith('test@integration.com');
+    expect(UserModel.findByIdentifier).toHaveBeenCalledWith('test@integration.com');
   });
   it('should return 401 if user is not found (integration)', async () => {
-    UserModel.findByEmail.mockResolvedValue(null);
+    UserModel.findByIdentifier.mockResolvedValue(null);
 
     const response = await request(app).post('/login').send({
-      email: 'nonexistent@integration.com',
+      identifier: 'nonexistent@integration.com',
       password: 'password123',
     });
 
     expect(response.statusCode).toBe(401);
-    expect(response.body).toHaveProperty('error', 'Invalid email or password');
+    expect(response.body).toHaveProperty('error', 'Invalid identifier or password');
   });
   describe('POST /register', () => {
     it('should call Restate EmailService when a user is successfully registered', async () => {
-      UserModel.findByEmail.mockResolvedValue(null);
+      UserModel.findByIdentifier.mockResolvedValue(null);
       UserModel.findByNickname.mockResolvedValue(null);
       UserModel.create.mockResolvedValue({ id: 1, email: 'test-restate@example.com' });
       PokemonModel.addPokemonToUser.mockResolvedValue(1);
@@ -90,7 +91,7 @@ describe('Auth Integration Tests - /login', () => {
       expect(response.status).toBe(201);
 
       const mockConnect = clients.connect;
-      expect(mockConnect).toHaveBeenCalledWith({ url: 'http://restate:8080' });
+      expect(mockConnect).toHaveBeenCalledWith({ url: 'http://127.0.0.1:8080' });
     });
   });
 });
