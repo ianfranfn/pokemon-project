@@ -48,9 +48,13 @@ export const deletePokemonHandler = async (req, res) => {
 export const getPokemonHandler = async (req, res) => {
   logger.info(`got a request to /api/pokemon by user: ${req.user.email}`);
   try {
-    // Try to get the user's Pokemons
+    const userId = req.user.userId || req.user.id;
 
-    const userId = req.user.id;
+    if (!userId) {
+      logger.error('Token does not contain a valid user ID:', req.user);
+      return res.status(401).json({ error: 'Invalid token structure' });
+    }
+
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
@@ -72,6 +76,7 @@ export const getPokemonHandler = async (req, res) => {
       } catch (creationError) {
         // Captures the specific error of creation (external API or DB)
         Sentry.captureException(creationError);
+        console.log(creationError);
         logger.warn('Error adding new Pokemon:', creationError.message);
         return res.status(503).json({
           error: 'External service unavailable',
@@ -95,6 +100,7 @@ export const getPokemonHandler = async (req, res) => {
     // If there is an error contacting the external API
     Sentry.captureException(error);
     logger.error('Error fetching Pokemons:', error.message);
+
     return res.status(500).json({
       error: 'Internal database error during read',
       details: error.message,
