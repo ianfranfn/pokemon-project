@@ -36,4 +36,15 @@ export class UserModel {
       [newCoins, dateString, id]
     );
   }
+
+  static async findById(id) {
+    const pool = getPool();
+    const [rows] = await pool.execute('SELECT * FROM users WHERE id = ?', [id]);
+    return rows[0];
+  }
+
+  static async updateCoins(id, newCoins) {
+    const pool = getPool();
+    await pool.execute('UPDATE users SET coins = ? WHERE id = ?', [newCoins, id]);
+  }
 }
