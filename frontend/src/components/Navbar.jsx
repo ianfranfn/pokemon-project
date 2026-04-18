@@ -11,6 +11,7 @@ export default function Navbar() {
   const router = useRouter();
 
   const [nickname, setNickname] = useState(null);
+  const [coins, setCoins] = useState(0);
   const [theme, setTheme] = useState('light');
 
   const isLoginPage = pathname === '/login';
@@ -31,6 +32,7 @@ export default function Navbar() {
         );
         const decodedData = JSON.parse(jsonPayload);
         if (decodedData.nickname) setNickname(decodedData.nickname);
+        if (decodedData.coins !== undefined) setCoins(decodedData.coins)
       } catch (error) {
         localStorage.removeItem('pokemon_token');
       }
@@ -106,9 +108,14 @@ export default function Navbar() {
 
             {nickname ? (
               <div className="flex items-center space-x-4 border-l border-gray-200 dark:border-gray-700 pl-4">
-                <span className="text-gray-600 dark:text-gray-300 text-sm font-semibold hidden sm:block">
-                  Hi, <span className="text-gray-900 dark:text-white">{nickname}</span>
-                </span>
+                <div className="hidden sm:flex flex-col items-end">
+                  <span className="text-gray-600 dark:text-gray-300 text-sm font-semibold">
+                    Hi, <span className="text-gray-900 dark:text-white">{nickname}</span>
+                  </span>
+                  <span className="text-yellow-600 dark:text-yellow-400 text-xs font-bold bg-yellow-100 dark:bg-yellow-900/30 px-2 py-0.5 rounded-full mt-1">
+                    {coins} Pokecoins
+                  </span>
+                </div>
                 <button
                   onClick={handleLogout}
                   className="text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-500 text-sm font-semibold transition-colors"
