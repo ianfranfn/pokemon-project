@@ -28,4 +28,12 @@ export class UserModel {
     );
     return { id: result.insertId, email, nickname };
   }
+
+  static async updateDailyReward(id, newCoins, dateString) {
+    const pool = getPool();
+    await pool.execute(
+      'UPDATE users SET coins = ?, last_login_date = ? WHERE id = ?',
+      [newCoins, dateString, id]
+    );
+  }
 }
