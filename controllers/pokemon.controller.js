@@ -2,7 +2,6 @@ import * as Sentry from '@sentry/node';
 import logger from '../utils/logger.js';
 import { PokemonModel } from '../models/pokemon.model.js';
 import { addDittoToUser } from '../services/pokemon.service.js';
-import { parse } from 'dotenv';
 
 export const updatePokemonHandler = async (req, res) => {
   const { id } = req.params;
@@ -76,7 +75,6 @@ export const getPokemonHandler = async (req, res) => {
       } catch (creationError) {
         // Captures the specific error of creation (external API or DB)
         Sentry.captureException(creationError);
-        console.log(creationError);
         logger.warn('Error adding new Pokemon:', creationError.message);
         return res.status(503).json({
           error: 'External service unavailable',
