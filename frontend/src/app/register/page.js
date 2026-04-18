@@ -37,7 +37,7 @@ export default function RegisterPage() {
     <main className="min-h-[calc(100vh-64px)] flex items-center justify-center p-4">
       <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-4 bg-gray-900 p-3 rounded-xl inline-block">
+          <div className="flex justify-center mb-4 p-3 inline-block">
             <Logo />
           </div>
           <h1 className="text-2xl font-bold text-gray-800">Start Your Journey</h1>

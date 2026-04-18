@@ -33,11 +33,11 @@ export default function Home() {
   ];
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors duration-300 bg-white">
       <div className="max-w-6xl mx-auto px-4 py-8">
         <h1 className="text-3xl text-gray-500 font-light mb-8">Pokédex</h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 transition-colors duration-300 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {mockPokemons.map((pokemon) => (
             <PokemonCard
               key={pokemon.id}
