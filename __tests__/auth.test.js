@@ -21,6 +21,7 @@ jest.mock('../models/user.model.js', () => ({
     findByEmail: jest.fn(),
     findByNickname: jest.fn(),
     create: jest.fn(),
+    updateDailyReward: jest.fn(),
   },
 }));
 jest.mock('@restatedev/restate-sdk-clients', () => ({
@@ -88,7 +89,9 @@ describe('Auth Controller - Unit Tests', () => {
     // Check the results
     expect(UserModel.findByIdentifier).toHaveBeenCalledWith('test@user.com');
     expect(bcrypt.compare).toHaveBeenCalledWith('123456', 'hash_secret');
-    expect(mockRes.json).toHaveBeenCalledWith({ accessToken: 'fake_token.jwt' });
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({ accessToken: 'fake_token.jwt' })
+    );
   });
 
   it('should return 401 if user is not found', async () => {

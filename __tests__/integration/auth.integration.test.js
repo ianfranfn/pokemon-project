@@ -15,6 +15,7 @@ jest.mock('../../models/user.model.js', () => ({
     findByEmail: jest.fn(),
     findByNickname: jest.fn(),
     create: jest.fn(),
+    updateDailyReward: jest.fn(),
   },
 }));
 jest.mock('../../models/emailLog.model.js', () => ({

@@ -26,6 +26,7 @@
     "@restatedev/restate-sdk-clients": "^1.10.4",
     "@sentry/node": "^7.120.4",
     "axios": "^1.13.6",
+    "baseline-browser-mapping": "^2.10.20",
     "bcryptjs": "^3.0.3",
     "cheerio": "^1.1.0",
     "cors": "^2.8.6",
