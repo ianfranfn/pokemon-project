@@ -59,9 +59,13 @@ export default function ShopPage() {
       const result = await response.json();
 
       if (response.ok) {
-        setMessage({ text: `Congrats! You've bought ${pokemon.name}`, type: 'success' });
-        // ! Important: Update the token or global coin state
-        setTimeout(() => window.location.reload(), 2000);
+        setMessage({ text: `Successfully bought: ${pokemon.name} added to your Pokedex.`, type: 'success' });
+
+        localStorage.setItem('pokemon_coins', result.newBalance);
+
+        window.dispatchEvent(new Event('coinsUpdated'));
+        
+        setTimeout(() => window.location.reload(), 2000); 
       } else {
         setMessage({ text: result.error || 'Error in the purchase', type: 'error' });
       }

@@ -122,7 +122,7 @@ export const loginHandler = async (req, res) => {
     const today = new Date();
     const todayString = today.toISOString().split('T')[0];
     
-    let currentCoins = user.coins || 100; 
+    let currentCoins = user.coins ?? 100;
     let rewardGiven = false;
     const rewardAmount = 50;
 

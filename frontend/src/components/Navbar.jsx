@@ -19,42 +19,54 @@ export default function Navbar() {
   const isAuthPage = isLoginPage || isRegisterPage;
 
   useEffect(() => {
-    const token = localStorage.getItem('pokemon_token');
-    if (token) {
-      try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(
-          atob(base64)
-            .split('')
-            .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-            .join('')
-        );
-        const decodedData = JSON.parse(jsonPayload);
-        if (decodedData.nickname) setNickname(decodedData.nickname);
-        if (decodedData.coins !== undefined) setCoins(decodedData.coins);
-      } catch (error) {
-        localStorage.removeItem('pokemon_token');
-      }
-    } else {
-      setNickname(null);
-    }
+    const loadUserData = () => {
+      const token = localStorage.getItem('pokemon_token');
+      if (token) {
+        try {
+          const base64Url = token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split('')
+              .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+              .join('')
+          );
+          const decodedData = JSON.parse(jsonPayload);
+          if (decodedData.nickname) setNickname(decodedData.nickname);
+          const savedCoins = localStorage.getItem('pokemon_coins');
+          if (savedCoins !== null) {
 
-    const storedTheme = localStorage.getItem('theme');
-    if (
-      storedTheme === 'dark' ||
-      (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)
-    ) {
-      document.documentElement.classList.add('dark');
-      setTheme('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      setTheme('light');
-    }
+            setCoins(parseInt(savedCoins));
+          } else if (decodedData.coins !== undefined) {
+            setCoins(decodedData.coins);
+            localStorage.setItem('pokemon_coins', decodedData.coins);
+          }
+        } catch (error) {
+          localStorage.removeItem('pokemon_token');
+          localStorage.removeItem('pokemon_coins');
+        }
+      } else {
+        setNickname(null);
+      }
+
+      const storedTheme = localStorage.getItem('theme');
+      if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+        setTheme('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        setTheme('light');
+      }
+    };
+    loadUserData();
+    window.addEventListener('coinsUpdated', loadUserData);
+
+    return () => window.removeEventListener('coinsUpdated', loadUserData);
   }, [pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem('pokemon_token');
+    localStorage.removeItem('pokemon_coins');
     setNickname(null);
     router.push('/login');
   };
