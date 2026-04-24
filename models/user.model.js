@@ -28,4 +28,23 @@ export class UserModel {
     );
     return { id: result.insertId, email, nickname };
   }
+
+  static async updateDailyReward(id, newCoins, dateString) {
+    const pool = getPool();
+    await pool.execute(
+      'UPDATE users SET coins = ?, last_login_date = ? WHERE id = ?',
+      [newCoins, dateString, id]
+    );
+  }
+
+  static async findById(id) {
+    const pool = getPool();
+    const [rows] = await pool.execute('SELECT * FROM users WHERE id = ?', [id]);
+    return rows[0];
+  }
+
+  static async updateCoins(id, newCoins) {
+    const pool = getPool();
+    await pool.execute('UPDATE users SET coins = ? WHERE id = ?', [newCoins, id]);
+  }
 }

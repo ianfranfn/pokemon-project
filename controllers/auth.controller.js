@@ -100,8 +100,7 @@ export const registerHandler = async (req, res) => {
 };
 
 export const loginHandler = async (req, res) => {
-  // Handler for login route
-  const { identifier, password } = req.body; // validating inputs
+  const { identifier, password } = req.body;
   if (!identifier || !password) {
     return res.status(400).json({ error: 'Identifier and password are required' });
   }
@@ -120,10 +119,39 @@ export const loginHandler = async (req, res) => {
       return res.status(401).json({ error: 'Invalid identifier or password' });
     }
 
-    const payload = { email: user.email, id: user.id, nickname: user.nickname }; // Information saved in the token if login is successful
+    const today = new Date();
+    const todayString = today.toISOString().split('T')[0];
+    
+    let currentCoins = user.coins ?? 100;
+    let rewardGiven = false;
+    const rewardAmount = 50;
+
+    let lastLoginString = null;
+    if (user.last_login_date) {
+      const d = new Date(user.last_login_date);
+      lastLoginString = d.toISOString().split('T')[0];
+    }
+
+    if (lastLoginString !== todayString) {
+      currentCoins += rewardAmount;
+      await UserModel.updateDailyReward(user.id, currentCoins, todayString);
+      rewardGiven = true;
+      logger.info(`User ${user.nickname} received daily reward. New balance: ${currentCoins}`);
+    }
+    const payload = { 
+      email: user.email, 
+      id: user.id, 
+      nickname: user.nickname,
+      coins: currentCoins 
+    }; 
     const accessToken = jwt.sign(payload, getJwtSecret(), { expiresIn: '1h' });
 
-    res.json({ accessToken: accessToken });
+    res.json({ 
+      accessToken: accessToken,
+      coins: currentCoins,
+      rewardGiven: rewardGiven,
+      rewardAmount: rewardAmount
+    });
   } catch (error) {
     logger.error('Login error:', error);
     return res.status(500).json({ error: 'Internal server error' });
