@@ -1,9 +1,8 @@
-name: Deploy to AWS EC2 (Rsync + Make)
+name: Deploy to AWS EC2
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   deploy:
@@ -25,7 +24,7 @@ jobs:
         run: |
           rsync -avz --exclude '.git' --exclude 'node_modules' --exclude '.github' ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/pokemon-project
 
-      - name: Remote Execution via SSH
+      - name: Remote execution via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -34,7 +33,7 @@ jobs:
           port: 22
           script_stop: true
           script: |
-            cd pokemon-project
-            docker compose down
-            docker system prune -a -f
-            make start
+            cd ~/pokemon-project/infrastructure
+            docker compose -f docker-compose.yml down --remove-orphans
+            docker compose -f docker-compose.yml build
+            docker compose -f docker-compose.yml up -d
