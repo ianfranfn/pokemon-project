@@ -7,11 +7,31 @@ import { API_URL } from '../../services/api';
 
 export default function ShopPage() {
   const router = useRouter();
-  const { updateCoins } = useAuth();
+  const { coins, updateCoins } = useAuth();
   const [pokemons, setPokemons] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isBuying, setIsBuying] = useState(null);
   const [message, setMessage] = useState({ text: '', type: '' });
+
+  const getNextDailyRewardAt = () => {
+    const nextRewardDate = new Date();
+    nextRewardDate.setUTCHours(24, 0, 0, 0);
+    return nextRewardDate.toISOString();
+  };
+
+  const formatTimeUntil = (dateString) => {
+    const targetDate = new Date(dateString);
+    const remainingMs = Math.max(targetDate.getTime() - Date.now(), 0);
+    const totalMinutes = Math.ceil(remainingMs / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+
+    return `${minutes}m`;
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('pokemon_token');
@@ -41,6 +61,21 @@ export default function ShopPage() {
 
   const handleBuy = async (pokemon) => {
     const token = localStorage.getItem('pokemon_token');
+
+    if (pokemon.owned) {
+      setMessage({ text: `You already own ${pokemon.name}.`, type: 'error' });
+      return;
+    }
+
+    if (coins < pokemon.price) {
+      const timeUntilReward = formatTimeUntil(getNextDailyRewardAt());
+      setMessage({
+        text: `Not enough coins. Your next daily reward will be available in ${timeUntilReward}.`,
+        type: 'error',
+      });
+      return;
+    }
+
     setIsBuying(pokemon.apiId);
     setMessage({ text: '', type: '' });
 
@@ -62,8 +97,19 @@ export default function ShopPage() {
           type: 'success',
         });
         updateCoins(result.newBalance);
+        setPokemons((currentPokemons) =>
+          currentPokemons.map((item) =>
+            item.apiId === pokemon.apiId ? { ...item, owned: true } : item
+          )
+        );
       } else {
-        setMessage({ text: result.error || 'Error in the purchase', type: 'error' });
+        const rewardText = result.nextRewardAt
+          ? ` Your next daily reward will be available in ${formatTimeUntil(result.nextRewardAt)}.`
+          : '';
+        setMessage({
+          text: `${result.error || 'Error in the purchase'}${rewardText}`,
+          type: 'error',
+        });
       }
     } catch (error) {
       setMessage({ text: 'Error connecting to the server', type: 'error' });
@@ -107,14 +153,23 @@ export default function ShopPage() {
             <p className="text-yellow-600 dark:text-yellow-400 font-bold mb-4">
               {pokemon.price} Pokecoins
             </p>
+            {pokemon.owned && (
+              <span className="mb-3 rounded-full bg-green-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                Owned
+              </span>
+            )}
             <button
               onClick={() => handleBuy(pokemon)}
-              disabled={isBuying === pokemon.apiId}
+              disabled={isBuying === pokemon.apiId || pokemon.owned}
               className={`w-full py-2 rounded-lg font-bold text-white transition-colors ${
-                isBuying === pokemon.apiId ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'
+                isBuying === pokemon.apiId || pokemon.owned
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : coins < pokemon.price
+                    ? 'bg-yellow-600 hover:bg-yellow-700'
+                    : 'bg-blue-600 hover:bg-blue-700'
               }`}
             >
-              {isBuying === pokemon.apiId ? 'Processing...' : 'Buy'}
+              {isBuying === pokemon.apiId ? 'Processing...' : pokemon.owned ? 'Owned' : coins < pokemon.price ? 'Need coins' : 'Buy'}
             </button>
           </div>
         ))}
