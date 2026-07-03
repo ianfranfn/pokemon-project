@@ -1,86 +1,44 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Logo from './Logo';
 import SearchIcon from './SearchIcon';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import { useAuth } from '../context/AuthContext';
+
+const getPreferredTheme = () => {
+  if (typeof window === 'undefined') {
+    return 'light';
+  }
+
+  const storedTheme = localStorage.getItem('theme');
+  if (storedTheme === 'dark' || storedTheme === 'light') {
+    return storedTheme;
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+
+const applyTheme = (theme) => {
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  localStorage.setItem('theme', theme);
+};
 
 export default function Navbar() {
   const pathname = usePathname();
-  const router = useRouter();
-
-  const [nickname, setNickname] = useState(null);
-  const [coins, setCoins] = useState(0);
-  const [theme, setTheme] = useState('light');
+  const { nickname, coins, logout } = useAuth();
+  const [theme, setTheme] = useState(getPreferredTheme);
 
   const isLoginPage = pathname === '/login';
   const isRegisterPage = pathname === '/register';
   const isAuthPage = isLoginPage || isRegisterPage;
 
   useEffect(() => {
-    const loadUserData = () => {
-      const token = localStorage.getItem('pokemon_token');
-      if (token) {
-        try {
-          const base64Url = token.split('.')[1];
-          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-          const jsonPayload = decodeURIComponent(
-            atob(base64)
-              .split('')
-              .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-              .join('')
-          );
-          const decodedData = JSON.parse(jsonPayload);
-          if (decodedData.nickname) setNickname(decodedData.nickname);
-          const savedCoins = localStorage.getItem('pokemon_coins');
-          if (savedCoins !== null) {
-
-            setCoins(parseInt(savedCoins));
-          } else if (decodedData.coins !== undefined) {
-            setCoins(decodedData.coins);
-            localStorage.setItem('pokemon_coins', decodedData.coins);
-          }
-        } catch (error) {
-          localStorage.removeItem('pokemon_token');
-          localStorage.removeItem('pokemon_coins');
-        }
-      } else {
-        setNickname(null);
-      }
-
-      const storedTheme = localStorage.getItem('theme');
-      if (storedTheme === 'dark' || (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark');
-        setTheme('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-        setTheme('light');
-      }
-    };
-    loadUserData();
-    window.addEventListener('coinsUpdated', loadUserData);
-
-    return () => window.removeEventListener('coinsUpdated', loadUserData);
-  }, [pathname]);
-
-  const handleLogout = () => {
-    localStorage.removeItem('pokemon_token');
-    localStorage.removeItem('pokemon_coins');
-    setNickname(null);
-    router.push('/login');
-  };
+    applyTheme(theme);
+  }, [theme]);
 
   const toggleTheme = () => {
-    if (theme === 'light') {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-      setTheme('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-      setTheme('light');
-    }
+    setTheme((currentTheme) => (currentTheme === 'light' ? 'dark' : 'light'));
   };
 
   return (
@@ -101,7 +59,7 @@ export default function Navbar() {
                 <input
                   type="text"
                   className="w-full bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border border-transparent dark:border-gray-700 rounded-full py-2 px-4 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors placeholder-gray-500 dark:placeholder-gray-400"
-                  placeholder="Search Pokémon by name or number..."
+                  placeholder="Search Pokemon by name or number..."
                 />
                 <button className="absolute right-4 top-2.5 text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-white transition-colors">
                   <SearchIcon className="h-5 w-5" />
@@ -160,7 +118,7 @@ export default function Navbar() {
                   </span>
                 </div>
                 <button
-                  onClick={handleLogout}
+                  onClick={logout}
                   className="text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-500 text-sm font-semibold transition-colors"
                 >
                   Log out

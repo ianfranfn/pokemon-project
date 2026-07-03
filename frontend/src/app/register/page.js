@@ -41,7 +41,7 @@ export default function RegisterPage() {
             <Logo />
           </div>
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white transition-colors duration-300">Start Your Journey</h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-2 transition-colors duration-300">Create your account to register your Pokémon</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-2 transition-colors duration-300">Create your account to register your Pokemon</p>
         </div>
 
         {error && (

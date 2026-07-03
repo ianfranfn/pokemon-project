@@ -15,17 +15,19 @@ export default function PokemonCard({ number, name, types, image }) {
 
   return (
     <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden cursor-pointer">
-      <div className="bg-gray-100 p-6 flex justify-center items-center h-48">
-        <img
+      <div className="relative flex h-48 items-center justify-center bg-gray-100 p-6">
+        <Image
           src={image}
           alt={name}
-          className="h-full object-contain drop-shadow-lg hover:scale-110 transition-transform duration-300"
+          fill
+          sizes="(max-width: 1024px) 50vw, 25vw"
+          className="object-contain p-6 drop-shadow-lg hover:scale-110 transition-transform duration-300"
         />
       </div>
 
       {/* Pokemon info */}
       <div className="p-4">
-        <p className="text-sm text-gray-400 font-bold mb-1">N.º {number}</p>
+        <p className="text-sm text-gray-400 font-bold mb-1">No. {number}</p>
         <h2 className="text-xl font-bold text-gray-800 capitalize mb-3">{name}</h2>
 
         <div className="flex gap-2">

@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:4000';
+import { API_URL } from './api';
 
 export const register = async (email, password, nickname) => {
   const response = await fetch(`${API_URL}/register`, {
@@ -29,8 +29,6 @@ export const login = async (identifier, password) => {
   });
 
   const data = await response.json();
-
-  console.log("Exact login response:", data);
 
   if (!response.ok) {
     throw new Error(data.error || 'Error logging in');

@@ -1,7 +1,9 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { API_URL } from '../../services/api';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -17,7 +19,7 @@ export default function Dashboard() {
     }
     const fetchMyPokemons = async () => {
       try {
-        const response = await fetch('http://localhost:4000/api/pokemon', {
+        const response = await fetch(`${API_URL}/api/pokemon`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -32,7 +34,7 @@ export default function Dashboard() {
           router.push('/login');
         }
       } catch (error) {
-        console.error('Error fetching Pokémon data:', error);
+        console.error('Error fetching Pokemon data:', error);
       } finally {
         setIsLoading(false);
       }
@@ -45,7 +47,7 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex justify-center items-center transition-colors duration-300">
         <p className="text-gray-900 dark:text-white text-xl font-bold animate-pulse">
-          Loading your Pokédex...
+          Loading your Pokedex...
         </p>
       </div>
     );
@@ -59,7 +61,7 @@ export default function Dashboard() {
         {pokemons.length === 0 ? (
           <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-300">
             <p className="text-gray-600 dark:text-gray-400 text-lg">
-              You haven't caught any Pokémon yet.
+              You have not caught any Pokemon yet.
             </p>
           </div>
         ) : (
@@ -71,10 +73,12 @@ export default function Dashboard() {
               >
                 <div className="aspect-square bg-gray-100 dark:bg-gray-700 rounded-md mb-4 flex items-center justify-center transition-colors duration-300 overflow-hidden relative">
                   {pokemon.image ? (
-                    <img 
-                      src={pokemon.image} 
+                    <Image
+                      src={pokemon.image}
                       alt={`Image of ${pokemon.name}`}
-                      className="w-full h-full object-contain p-4 drop-shadow-md hover:scale-110 transition-transform duration-300"
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                      className="object-contain p-4 drop-shadow-md hover:scale-110 transition-transform duration-300"
                     />
                   ) : (
                     <span className="text-gray-400 dark:text-gray-500 text-sm">No image available</span>
