@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Logo from './Logo';
 import SearchIcon from './SearchIcon';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 
 const getPreferredTheme = () => {
@@ -26,8 +26,16 @@ const applyTheme = (theme) => {
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { nickname, coins, logout } = useAuth();
   const [theme, setTheme] = useState(getPreferredTheme);
+  const [searchTerm, setSearchTerm] = useState(() => {
+    if (typeof window === 'undefined') {
+      return '';
+    }
+
+    return new URLSearchParams(window.location.search).get('search') || '';
+  });
 
   const isLoginPage = pathname === '/login';
   const isRegisterPage = pathname === '/register';
@@ -39,6 +47,30 @@ export default function Navbar() {
 
   const toggleTheme = () => {
     setTheme((currentTheme) => (currentTheme === 'light' ? 'dark' : 'light'));
+  };
+
+  const updatePokedexSearch = (value) => {
+    const query = value.trim();
+    const path = query ? `/?search=${encodeURIComponent(query)}` : '/';
+
+    if (pathname !== '/') {
+      router.push(path);
+      return;
+    }
+
+    window.history.replaceState(null, '', path);
+    window.dispatchEvent(new CustomEvent('pokemon-search-change', { detail: query }));
+  };
+
+  const handleSearchChange = (event) => {
+    const value = event.target.value;
+    setSearchTerm(value);
+    updatePokedexSearch(value);
+  };
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    updatePokedexSearch(searchTerm);
   };
 
   return (
@@ -55,16 +87,22 @@ export default function Navbar() {
 
           {!isAuthPage && (
             <div className="flex-1 max-w-lg mx-8 hidden md:block">
-              <div className="relative">
+              <form className="relative" onSubmit={handleSearchSubmit}>
                 <input
                   type="text"
+                  value={searchTerm}
+                  onChange={handleSearchChange}
                   className="w-full bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border border-transparent dark:border-gray-700 rounded-full py-2 px-4 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors placeholder-gray-500 dark:placeholder-gray-400"
                   placeholder="Search Pokemon by name or number..."
                 />
-                <button className="absolute right-4 top-2.5 text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-white transition-colors">
+                <button
+                  type="submit"
+                  className="absolute right-4 top-2.5 text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-white transition-colors"
+                  aria-label="Search Pokemon"
+                >
                   <SearchIcon className="h-5 w-5" />
                 </button>
-              </div>
+              </form>
             </div>
           )}
 
