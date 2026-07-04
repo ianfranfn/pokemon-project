@@ -1,29 +1,59 @@
-name: Run Tests
+name: Run Checks
 
 on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
 
 jobs:
-  build:
+  backend:
+    name: Backend Tests
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Use Node.js 18.x
+      - name: Use Node.js 20.x
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
+          node-version: '20.x'
           cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: backend
 
-      - name: Run tests
-        run: npm test
+      - name: Run backend tests
+        run: npm test -- --runInBand
+        working-directory: backend
         env:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+  frontend:
+    name: Frontend Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Run frontend lint
+        run: npm run lint
+        working-directory: frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: frontend

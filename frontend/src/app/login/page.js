@@ -1,18 +1,20 @@
 'use client';
-
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Logo from '../../components/Logo';
 import { login } from '../../services/authService';
+import { useAuth } from '../../context/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { loginContext } = useAuth();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  
   const handleIdentifierChange = (e) => setIdentifier(e.target.value);
   const handlePasswordChange = (e) => setPassword(e.target.value);
 
@@ -23,6 +25,7 @@ export default function LoginPage() {
 
     try {
       await login(identifier, password);
+      loginContext();
       router.push('/dashboard');
     } catch (err) {
       setError(err.message || 'Error logging in');
@@ -41,7 +44,7 @@ export default function LoginPage() {
 
           <h1 className="text-2xl font-bold text-gray-800 dark:text-white transition-colors duration-300">Welcome back!</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-2 transition-colors duration-300">
-            Enter your credentials to access your Pokédex
+            Enter your credentials to access your Pokedex
           </p>
         </div>
 
@@ -96,7 +99,7 @@ export default function LoginPage() {
         </form>
 
         <p className="text-center text-gray-600 dark:text-gray-400 text-sm mt-8 transition-colors duration-300">
-          Don't have a trainer license yet?{' '}
+          Do not have a trainer license yet?{' '}
           <Link
             href="/register"
             className="text-red-500 hover:text-red-400 font-semibold transition-colors"

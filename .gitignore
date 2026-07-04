@@ -1,4 +1,8 @@
 node_modules/
 npm-debug.log*
 .env
+backend/.env
+infrastructure/.env
+frontend/.env
+frontend/.env.local
 error.log

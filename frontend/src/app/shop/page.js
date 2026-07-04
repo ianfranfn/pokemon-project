@@ -1,10 +1,13 @@
 'use client';
-
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '../../context/AuthContext';
+import { API_URL } from '../../services/api';
 
 export default function ShopPage() {
   const router = useRouter();
+  const { updateCoins } = useAuth();
   const [pokemons, setPokemons] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isBuying, setIsBuying] = useState(null);
@@ -19,7 +22,7 @@ export default function ShopPage() {
 
     const fetchShopItems = async () => {
       try {
-        const response = await fetch('http://localhost:4000/shop', {
+        const response = await fetch(`${API_URL}/shop`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const result = await response.json();
@@ -42,30 +45,23 @@ export default function ShopPage() {
     setMessage({ text: '', type: '' });
 
     try {
-      const response = await fetch('http://localhost:4000/shop/buy', {
+      const response = await fetch(`${API_URL}/shop/buy`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          name: pokemon.name,
-          apiId: pokemon.apiId,
-          image: pokemon.image,
-          price: pokemon.price,
-        }),
+        body: JSON.stringify({ apiId: pokemon.apiId }),
       });
 
       const result = await response.json();
 
       if (response.ok) {
-        setMessage({ text: `Successfully bought: ${pokemon.name} added to your Pokedex.`, type: 'success' });
-
-        localStorage.setItem('pokemon_coins', result.newBalance);
-
-        window.dispatchEvent(new Event('coinsUpdated'));
-        
-        setTimeout(() => window.location.reload(), 2000); 
+        setMessage({
+          text: `Successfully bought: ${pokemon.name} added to your Pokedex.`,
+          type: 'success',
+        });
+        updateCoins(result.newBalance);
       } else {
         setMessage({ text: result.error || 'Error in the purchase', type: 'error' });
       }
@@ -98,7 +94,15 @@ export default function ShopPage() {
             key={pokemon.apiId}
             className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 flex flex-col items-center transition-all hover:shadow-xl border border-transparent dark:border-gray-700"
           >
-            <img src={pokemon.image} alt={pokemon.name} className="w-32 h-32 object-contain mb-4" />
+            <div className="relative mb-4 h-32 w-32">
+              <Image
+                src={pokemon.image}
+                alt={pokemon.name}
+                fill
+                sizes="128px"
+                className="object-contain"
+              />
+            </div>
             <h2 className="text-xl font-bold capitalize dark:text-white mb-2">{pokemon.name}</h2>
             <p className="text-yellow-600 dark:text-yellow-400 font-bold mb-4">
               {pokemon.price} Pokecoins

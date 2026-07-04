@@ -1,12 +1,18 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Dashboard and Authentication', () => {
-  
   test('Must log in and redirect to dashboard', async ({ page }) => {
+    const identifier = process.env.E2E_LOGIN_IDENTIFIER;
+    const password = process.env.E2E_LOGIN_PASSWORD;
+
+    if (!identifier || !password) {
+      throw new Error('E2E_LOGIN_IDENTIFIER and E2E_LOGIN_PASSWORD are required');
+    }
+
     await page.goto('http://localhost:3000/login');
 
-    await page.fill('input[type="text"]', 'ianfarina9@gmail.com');
-    await page.fill('input[type="password"]', 'admin123'); 
+    await page.fill('input[type="text"]', identifier);
+    await page.fill('input[type="password"]', password);
     await page.click('button[type="submit"]');
 
     await expect(page).toHaveURL('http://localhost:3000/dashboard');
@@ -22,10 +28,8 @@ test.describe('Dashboard and Authentication', () => {
   });
 
   test('Must redirect to login if no token is present', async ({ page }) => {
-
     await page.goto('http://localhost:3000/dashboard');
 
     await expect(page).toHaveURL('http://localhost:3000/login');
   });
-
 });
