@@ -32,7 +32,26 @@ Tables expected by the app:
 
 - `users`
 - `user_pokemons`
+- `purchase_history`
+- `shop_items`
 - `email_logs`
+- `schema_migrations`
+
+Existing databases should be updated with the migration runner:
+
+```bash
+cd backend
+npm run migrate
+```
+
+When running through Docker Compose:
+
+```bash
+cd infrastructure
+docker compose exec app npm run migrate
+```
+
+Migration files live in `infrastructure/migrations` and are recorded in `schema_migrations`.
 
 ## Local Development
 
@@ -45,6 +64,11 @@ npm run dev
 ```
 
 The backend runs on `http://localhost:4000`.
+
+Health endpoints:
+
+- `GET /health`: backend process is responding
+- `GET /ready`: backend and database are ready
 
 ### Frontend
 
@@ -64,6 +88,8 @@ docker compose up -d --build
 ```
 
 Before starting Docker, create `infrastructure/.env` from `infrastructure/.env.example`.
+
+Docker healthchecks use the backend `/ready` endpoint and the MySQL ping endpoint.
 
 ## Useful Checks
 
