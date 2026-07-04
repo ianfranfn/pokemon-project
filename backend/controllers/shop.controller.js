@@ -26,6 +26,8 @@ const fetchPokemonByApiId = async (apiId) => {
 };
 
 export const getShopPokemonsHandler = async (req, res) => {
+  const userId = req.user.id || req.user.userId;
+
   try {
     const response = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${SHOP_LIMIT}&offset=0`);
 
@@ -34,12 +36,14 @@ export const getShopPokemonsHandler = async (req, res) => {
     }
 
     const data = await response.json();
+    const ownedApiIds = new Set(await PokemonModel.findOwnedApiIdsByUserId(userId));
 
     const shopItems = data.results.map((pkm, index) => ({
       apiId: index + 1,
       name: pkm.name,
       price: POKEMON_PRICE,
       image: buildPokemonImageUrl(pkm.name),
+      owned: ownedApiIds.has(index + 1),
     }));
 
     return res.status(200).json({ data: shopItems });
@@ -58,6 +62,12 @@ export const buyPokemonHandler = async (req, res) => {
   }
 
   try {
+    const ownedApiIds = await PokemonModel.findOwnedApiIdsByUserId(userId);
+
+    if (ownedApiIds.includes(normalizedApiId)) {
+      return res.status(409).json({ error: 'You already own this Pokemon.', code: 'ALREADY_OWNED' });
+    }
+
     const selectedPokemon = await fetchPokemonByApiId(normalizedApiId);
     const result = await PokemonModel.purchaseForUser(userId, selectedPokemon, POKEMON_PRICE);
 
@@ -72,7 +82,13 @@ export const buyPokemonHandler = async (req, res) => {
     });
   } catch (error) {
     if (error.statusCode) {
-      return res.status(error.statusCode).json({ error: error.message });
+      return res.status(error.statusCode).json({
+        error: error.message,
+        code: error.code,
+        currentCoins: error.currentCoins,
+        requiredCoins: error.requiredCoins,
+        nextRewardAt: error.nextRewardAt,
+      });
     }
 
     logger.error('Error processing purchase:', error);
