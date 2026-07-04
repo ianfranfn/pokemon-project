@@ -16,13 +16,17 @@ export default function PokemonCard({ number, name, types, image }) {
   return (
     <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden cursor-pointer">
       <div className="relative flex h-48 items-center justify-center bg-gray-100 p-6">
-        <Image
-          src={image}
-          alt={name}
-          fill
-          sizes="(max-width: 1024px) 50vw, 25vw"
-          className="object-contain p-6 drop-shadow-lg hover:scale-110 transition-transform duration-300"
-        />
+        {image ? (
+          <Image
+            src={image}
+            alt={name}
+            fill
+            sizes="(max-width: 1024px) 50vw, 25vw"
+            className="object-contain p-6 drop-shadow-lg hover:scale-110 transition-transform duration-300"
+          />
+        ) : (
+          <span className="text-sm font-semibold text-gray-400">No image available</span>
+        )}
       </div>
 
       {/* Pokemon info */}
