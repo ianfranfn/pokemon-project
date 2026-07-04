@@ -2,7 +2,9 @@ import 'dotenv/config'; // Load the variables from .env into process.env
 import express from 'express';
 import cors from 'cors';
 import * as Sentry from '@sentry/node';
-import router from './routes/auth.routes.js';
+import authRoutes from './routes/auth.routes.js';
+import pokemonRoutes from './routes/pokemon.routes.js';
+import shopRoutes from './routes/shop.routes.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpecs from './config/swagger.js';
 import { globalLimiter } from './middleware/rateLimit.middleware.js';
@@ -34,7 +36,9 @@ app.use(globalLimiter); // Apply the global rate limiter to all routes
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
-app.use('/', router); // Using the auth routes
+app.use('/', authRoutes);
+app.use('/api/pokemon', pokemonRoutes);
+app.use('/shop', shopRoutes);
 
 if (sentryEnabled) {
   app.use(Sentry.Handlers.errorHandler());
