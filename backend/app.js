@@ -6,6 +6,7 @@ import router from './routes/auth.routes.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpecs from './config/swagger.js';
 import { globalLimiter } from './middleware/rateLimit.middleware.js';
+import { healthHandler, readinessHandler } from './controllers/health.controller.js';
 
 const app = express();
 
@@ -25,6 +26,9 @@ if (sentryEnabled) {
 app.use(cors());
 app.use(express.json()); // Middleware to parse JSON bodies
 app.use(express.urlencoded({ extended: true }));
+
+app.get('/health', healthHandler);
+app.get('/ready', readinessHandler);
 
 app.use(globalLimiter); // Apply the global rate limiter to all routes
 
