@@ -13,6 +13,7 @@ export default function ShopPage() {
   const [isBuying, setIsBuying] = useState(null);
   const [message, setMessage] = useState({ text: '', type: '' });
   const [purchaseHistory, setPurchaseHistory] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const getNextDailyRewardAt = () => {
     const nextRewardDate = new Date();
@@ -33,6 +34,26 @@ export default function ShopPage() {
 
     return `${minutes}m`;
   };
+
+  useEffect(() => {
+    const readSearchTerm = () => {
+      setSearchTerm(new URLSearchParams(window.location.search).get('search') || '');
+    };
+
+    readSearchTerm();
+
+    const handleSearchChange = (event) => {
+      setSearchTerm(event.detail || '');
+    };
+
+    window.addEventListener('pokemon-shop-search-change', handleSearchChange);
+    window.addEventListener('popstate', readSearchTerm);
+
+    return () => {
+      window.removeEventListener('pokemon-shop-search-change', handleSearchChange);
+      window.removeEventListener('popstate', readSearchTerm);
+    };
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('pokemon_token');
@@ -143,6 +164,19 @@ export default function ShopPage() {
 
   if (isLoading) return <div className="text-center p-10 dark:text-white">Loading shop...</div>;
 
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  const visiblePokemons = pokemons.filter((pokemon) => {
+    if (!normalizedSearchTerm) {
+      return true;
+    }
+
+    return (
+      pokemon.name.toLowerCase().includes(normalizedSearchTerm) ||
+      String(pokemon.apiId).includes(normalizedSearchTerm) ||
+      String(pokemon.apiId).padStart(4, '0').includes(normalizedSearchTerm.padStart(4, '0'))
+    );
+  });
+
   const getRarityClassName = (rarity) => {
     const classes = {
       common: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200',
@@ -190,7 +224,12 @@ export default function ShopPage() {
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-          {pokemons.map((pokemon) => (
+          {visiblePokemons.length === 0 && (
+            <div className="col-span-full rounded-lg bg-white p-10 text-center text-gray-500 shadow-md dark:bg-gray-800 dark:text-gray-400">
+              No shop Pokemon match your current search.
+            </div>
+          )}
+          {visiblePokemons.map((pokemon) => (
             <div
               key={pokemon.apiId}
               className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 flex flex-col items-center transition-all hover:shadow-xl border border-transparent dark:border-gray-700"

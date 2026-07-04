@@ -16,6 +16,8 @@ const mapPurchaseHistoryRow = (row) => ({
   purchasedAt: row.purchased_at,
 });
 
+const STARTER_API_IDS = new Set([1, 4]);
+
 export class PokemonModel {
   static async getUserPokemonColumns(executor = getPool()) {
     if (userPokemonColumns) {
@@ -114,10 +116,88 @@ export class PokemonModel {
       sourceParams
     );
 
+    const enrichedRows = await PokemonModel.enrichOwnedPokemonMetadata(userId, rows, pool);
+
     return {
-      rows,
+      rows: enrichedRows,
       totalItems: totalResult[0].total,
     };
+  }
+
+  static async enrichOwnedPokemonMetadata(userId, rows, executor = getPool()) {
+    if (rows.length === 0) {
+      return rows;
+    }
+
+    const apiIds = Array.from(new Set(rows.map((row) => Number(row.api_id)).filter(Boolean)));
+    const historyByApiId = new Map();
+    const shopItemByApiId = new Map();
+
+    if (apiIds.length === 0) {
+      return rows;
+    }
+
+    if (await PokemonModel.hasPurchaseHistoryTable(executor)) {
+      const placeholders = apiIds.map(() => '?').join(', ');
+      const [historyRows] = await executor.query(
+        `SELECT ph.api_id, ph.price, ph.source
+         FROM purchase_history ph
+         INNER JOIN (
+           SELECT api_id, MAX(id) AS id
+           FROM purchase_history
+           WHERE user_id = ?
+             AND api_id IN (${placeholders})
+           GROUP BY api_id
+         ) latest_purchase ON latest_purchase.id = ph.id`,
+        [userId, ...apiIds]
+      );
+
+      for (const historyRow of historyRows) {
+        historyByApiId.set(Number(historyRow.api_id), {
+          price: Number(historyRow.price),
+          source: historyRow.source || 'shop',
+        });
+      }
+    }
+
+    if (await PokemonModel.hasShopItemsTable(executor)) {
+      const placeholders = apiIds.map(() => '?').join(', ');
+      const [shopRows] = await executor.query(
+        `SELECT api_id, price
+         FROM shop_items
+         WHERE api_id IN (${placeholders})`,
+        apiIds
+      );
+
+      for (const shopRow of shopRows) {
+        shopItemByApiId.set(Number(shopRow.api_id), {
+          price: Number(shopRow.price),
+        });
+      }
+    }
+
+    return rows.map((row) => {
+      const apiId = Number(row.api_id);
+      const currentPrice = Number(row.purchase_price || 0);
+      const history = historyByApiId.get(apiId);
+      const shopItem = shopItemByApiId.get(apiId);
+      const canInferFromShopItem = shopItem && !STARTER_API_IDS.has(apiId);
+      const inferredPrice =
+        currentPrice || history?.price || (canInferFromShopItem ? shopItem.price : 0);
+      const source =
+        row.source === 'shop' ||
+        history ||
+        currentPrice > 0 ||
+        canInferFromShopItem
+          ? 'shop'
+          : row.source || 'starter';
+
+      return {
+        ...row,
+        source,
+        purchase_price: inferredPrice,
+      };
+    });
   }
 
   static async findOwnedApiIdsByUserId(userId) {
