@@ -2,19 +2,70 @@ import logger from '../utils/logger.js';
 import { PokemonModel } from '../models/pokemon.model.js';
 
 const SHOP_LIMIT = 20;
-const POKEMON_PRICE = 50;
 
 const buildPokemonImageUrl = (name) => `https://img.pokemondb.net/sprites/home/normal/${name}.png`;
 
-const normalizeShopPokemon = (pokemon) => ({
+const getRarityForApiId = (apiId) => {
+  if (apiId % 20 === 0) {
+    return 'epic';
+  }
+
+  if (apiId % 10 === 0) {
+    return 'rare';
+  }
+
+  if (apiId % 5 === 0) {
+    return 'uncommon';
+  }
+
+  return 'common';
+};
+
+const getPriceForRarity = (rarity) => {
+  const prices = {
+    common: 40,
+    uncommon: 60,
+    rare: 90,
+    epic: 120,
+  };
+
+  return prices[rarity] || prices.common;
+};
+
+const getBaseStockForApiId = (apiId) => {
+  if (apiId % 17 === 0) {
+    return 0;
+  }
+
+  const stockByRarity = {
+    common: 12,
+    uncommon: 8,
+    rare: 4,
+    epic: 2,
+  };
+
+  return stockByRarity[getRarityForApiId(apiId)];
+};
+
+const getShopMetadata = (apiId, soldCount = 0) => {
+  const rarity = getRarityForApiId(apiId);
+
+  return {
+    rarity,
+    price: getPriceForRarity(rarity),
+    stock: Math.max(getBaseStockForApiId(apiId) - soldCount, 0),
+  };
+};
+
+const normalizeShopPokemon = (pokemon, soldCount = 0) => ({
   apiId: pokemon.id,
   name: pokemon.name,
-  price: POKEMON_PRICE,
+  ...getShopMetadata(pokemon.id, soldCount),
   type: pokemon.types.map((slot) => slot.type.name).join('/'),
   image: buildPokemonImageUrl(pokemon.name),
 });
 
-const fetchPokemonByApiId = async (apiId) => {
+const fetchPokemonByApiId = async (apiId, soldCount = 0) => {
   const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${apiId}`);
 
   if (!response.ok) {
@@ -22,7 +73,7 @@ const fetchPokemonByApiId = async (apiId) => {
   }
 
   const data = await response.json();
-  return normalizeShopPokemon(data);
+  return normalizeShopPokemon(data, soldCount);
 };
 
 export const getShopPokemonsHandler = async (req, res) => {
@@ -37,11 +88,13 @@ export const getShopPokemonsHandler = async (req, res) => {
 
     const data = await response.json();
     const ownedApiIds = new Set(await PokemonModel.findOwnedApiIdsByUserId(userId));
+    const apiIds = data.results.map((_, index) => index + 1);
+    const purchaseCounts = await PokemonModel.countPurchaseHistoryByApiIds(apiIds);
 
     const shopItems = data.results.map((pkm, index) => ({
       apiId: index + 1,
       name: pkm.name,
-      price: POKEMON_PRICE,
+      ...getShopMetadata(index + 1, purchaseCounts.get(index + 1) || 0),
       image: buildPokemonImageUrl(pkm.name),
       owned: ownedApiIds.has(index + 1),
     }));
@@ -68,8 +121,21 @@ export const buyPokemonHandler = async (req, res) => {
       return res.status(409).json({ error: 'You already own this Pokemon.', code: 'ALREADY_OWNED' });
     }
 
-    const selectedPokemon = await fetchPokemonByApiId(normalizedApiId);
-    const result = await PokemonModel.purchaseForUser(userId, selectedPokemon, POKEMON_PRICE);
+    const purchaseCounts = await PokemonModel.countPurchaseHistoryByApiIds([normalizedApiId]);
+    const selectedPokemon = await fetchPokemonByApiId(
+      normalizedApiId,
+      purchaseCounts.get(normalizedApiId) || 0
+    );
+
+    if (selectedPokemon.stock <= 0) {
+      return res.status(409).json({ error: 'This Pokemon is out of stock.', code: 'OUT_OF_STOCK' });
+    }
+
+    const result = await PokemonModel.purchaseForUser(
+      userId,
+      selectedPokemon,
+      selectedPokemon.price
+    );
 
     logger.info(
       `User ${result.user.nickname} bought ${selectedPokemon.name}. New balance: ${result.newBalance}`
@@ -79,6 +145,14 @@ export const buyPokemonHandler = async (req, res) => {
       message: 'Purchase successful',
       newBalance: result.newBalance,
       pokemon: result.pokemon,
+      purchase: {
+        apiId: selectedPokemon.apiId,
+        name: selectedPokemon.name,
+        price: selectedPokemon.price,
+        rarity: selectedPokemon.rarity,
+        source: 'shop',
+        purchasedAt: new Date().toISOString(),
+      },
     });
   } catch (error) {
     if (error.statusCode) {
@@ -93,5 +167,17 @@ export const buyPokemonHandler = async (req, res) => {
 
     logger.error('Error processing purchase:', error);
     return res.status(500).json({ error: 'Internal server error processing purchase' });
+  }
+};
+
+export const getPurchaseHistoryHandler = async (req, res) => {
+  const userId = req.user.id || req.user.userId;
+
+  try {
+    const history = await PokemonModel.findPurchaseHistoryByUserId(userId);
+    return res.status(200).json({ data: history });
+  } catch (error) {
+    logger.error('Error fetching purchase history:', error);
+    return res.status(500).json({ error: 'Internal server error fetching purchase history' });
   }
 };

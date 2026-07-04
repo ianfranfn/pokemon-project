@@ -12,6 +12,7 @@ export default function ShopPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isBuying, setIsBuying] = useState(null);
   const [message, setMessage] = useState({ text: '', type: '' });
+  const [purchaseHistory, setPurchaseHistory] = useState([]);
 
   const getNextDailyRewardAt = () => {
     const nextRewardDate = new Date();
@@ -40,6 +41,17 @@ export default function ShopPage() {
       return;
     }
 
+    const fetchPurchaseHistory = async () => {
+      const response = await fetch(`${API_URL}/shop/history`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const result = await response.json();
+
+      if (response.ok) {
+        setPurchaseHistory(result.data || []);
+      }
+    };
+
     const fetchShopItems = async () => {
       try {
         const response = await fetch(`${API_URL}/shop`, {
@@ -49,6 +61,7 @@ export default function ShopPage() {
         if (response.ok) {
           setPokemons(result.data);
         }
+        await fetchPurchaseHistory();
       } catch (error) {
         console.error('Error fetching shop:', error);
       } finally {
@@ -64,6 +77,11 @@ export default function ShopPage() {
 
     if (pokemon.owned) {
       setMessage({ text: `You already own ${pokemon.name}.`, type: 'error' });
+      return;
+    }
+
+    if (pokemon.stock <= 0) {
+      setMessage({ text: `${pokemon.name} is out of stock.`, type: 'error' });
       return;
     }
 
@@ -102,6 +120,9 @@ export default function ShopPage() {
             item.apiId === pokemon.apiId ? { ...item, owned: true } : item
           )
         );
+        if (result.purchase) {
+          setPurchaseHistory((currentHistory) => [result.purchase, ...currentHistory].slice(0, 20));
+        }
       } else {
         const rewardText = result.nextRewardAt
           ? ` Your next daily reward will be available in ${formatTimeUntil(result.nextRewardAt)}.`
@@ -120,9 +141,40 @@ export default function ShopPage() {
 
   if (isLoading) return <div className="text-center p-10 dark:text-white">Loading shop...</div>;
 
+  const getRarityClassName = (rarity) => {
+    const classes = {
+      common: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200',
+      uncommon: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300',
+      rare: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+      epic: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    };
+
+    return classes[rarity] || classes.common;
+  };
+
+  const formatHistoryDate = (dateString) => {
+    if (!dateString) {
+      return '';
+    }
+
+    return new Intl.DateTimeFormat('en', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(dateString));
+  };
+
   return (
     <main className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Pokemon Shop</h1>
+      <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Pokemon Shop</h1>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            Prices change by rarity, and out-of-stock Pokemon cannot be purchased.
+          </p>
+        </div>
+      </div>
 
       {message.text && (
         <div
@@ -134,45 +186,96 @@ export default function ShopPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {pokemons.map((pokemon) => (
-          <div
-            key={pokemon.apiId}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 flex flex-col items-center transition-all hover:shadow-xl border border-transparent dark:border-gray-700"
-          >
-            <div className="relative mb-4 h-32 w-32">
-              <Image
-                src={pokemon.image}
-                alt={pokemon.name}
-                fill
-                sizes="128px"
-                className="object-contain"
-              />
-            </div>
-            <h2 className="text-xl font-bold capitalize dark:text-white mb-2">{pokemon.name}</h2>
-            <p className="text-yellow-600 dark:text-yellow-400 font-bold mb-4">
-              {pokemon.price} Pokecoins
-            </p>
-            {pokemon.owned && (
-              <span className="mb-3 rounded-full bg-green-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-green-700 dark:bg-green-900/30 dark:text-green-300">
-                Owned
-              </span>
-            )}
-            <button
-              onClick={() => handleBuy(pokemon)}
-              disabled={isBuying === pokemon.apiId || pokemon.owned}
-              className={`w-full py-2 rounded-lg font-bold text-white transition-colors ${
-                isBuying === pokemon.apiId || pokemon.owned
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : coins < pokemon.price
-                    ? 'bg-yellow-600 hover:bg-yellow-700'
-                    : 'bg-blue-600 hover:bg-blue-700'
-              }`}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+          {pokemons.map((pokemon) => (
+            <div
+              key={pokemon.apiId}
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 flex flex-col items-center transition-all hover:shadow-xl border border-transparent dark:border-gray-700"
             >
-              {isBuying === pokemon.apiId ? 'Processing...' : pokemon.owned ? 'Owned' : coins < pokemon.price ? 'Need coins' : 'Buy'}
-            </button>
-          </div>
-        ))}
+              <div className="mb-3 flex w-full items-center justify-between gap-2">
+                <span
+                  className={`rounded-full px-2.5 py-1 text-xs font-bold capitalize ${getRarityClassName(
+                    pokemon.rarity
+                  )}`}
+                >
+                  {pokemon.rarity}
+                </span>
+                <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
+                  {pokemon.stock > 0 ? `${pokemon.stock} in stock` : 'Out of stock'}
+                </span>
+              </div>
+              <div className="relative mb-4 h-32 w-32">
+                <Image
+                  src={pokemon.image}
+                  alt={pokemon.name}
+                  fill
+                  sizes="128px"
+                  className="object-contain"
+                />
+              </div>
+              <h2 className="text-xl font-bold capitalize dark:text-white mb-2">{pokemon.name}</h2>
+              <p className="text-yellow-600 dark:text-yellow-400 font-bold mb-4">
+                {pokemon.price} Pokecoins
+              </p>
+              {pokemon.owned && (
+                <span className="mb-3 rounded-full bg-green-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                  Owned
+                </span>
+              )}
+              <button
+                onClick={() => handleBuy(pokemon)}
+                disabled={isBuying === pokemon.apiId || pokemon.owned || pokemon.stock <= 0}
+                className={`w-full py-2 rounded-lg font-bold text-white transition-colors ${
+                  isBuying === pokemon.apiId || pokemon.owned || pokemon.stock <= 0
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : coins < pokemon.price
+                      ? 'bg-yellow-600 hover:bg-yellow-700'
+                      : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+              >
+                {isBuying === pokemon.apiId
+                  ? 'Processing...'
+                  : pokemon.owned
+                    ? 'Owned'
+                    : pokemon.stock <= 0
+                      ? 'Out of stock'
+                      : coins < pokemon.price
+                        ? 'Need coins'
+                        : 'Buy'}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <aside className="h-fit rounded-lg bg-white p-4 shadow-md dark:bg-gray-800">
+          <h2 className="mb-4 text-lg font-bold text-gray-900 dark:text-white">Purchase history</h2>
+          {purchaseHistory.length === 0 ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Your shop purchases will appear here.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {purchaseHistory.map((item, index) => (
+                <div
+                  key={`${item.apiId}-${item.purchasedAt || index}`}
+                  className="rounded-md border border-gray-200 p-3 dark:border-gray-700"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-bold capitalize text-gray-900 dark:text-white">{item.name}</p>
+                    <span className="text-sm font-bold text-yellow-600 dark:text-yellow-400">
+                      {item.price}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400">
+                    <span className="capitalize">{item.rarity || 'common'}</span>
+                    <span>{formatHistoryDate(item.purchasedAt || item.purchased_at)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </aside>
       </div>
     </main>
   );

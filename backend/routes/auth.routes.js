@@ -12,7 +12,11 @@ import {
 import { validateRegistration } from '../middleware/validation.middleware.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { strictLimiter } from '../middleware/rateLimit.middleware.js';
-import { getShopPokemonsHandler, buyPokemonHandler } from '../controllers/shop.controller.js';
+import {
+  getShopPokemonsHandler,
+  buyPokemonHandler,
+  getPurchaseHistoryHandler,
+} from '../controllers/shop.controller.js';
 
 const router = express.Router();
 
@@ -140,5 +144,6 @@ router.delete('/api/pokemon/:id', verifyToken, deletePokemonHandler);
 
 router.get('/shop', verifyToken, getShopPokemonsHandler);
 router.post('/shop/buy', verifyToken, buyPokemonHandler);
+router.get('/shop/history', verifyToken, getPurchaseHistoryHandler);
 
 export default router;
