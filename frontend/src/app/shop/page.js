@@ -117,7 +117,9 @@ export default function ShopPage() {
         updateCoins(result.newBalance);
         setPokemons((currentPokemons) =>
           currentPokemons.map((item) =>
-            item.apiId === pokemon.apiId ? { ...item, owned: true } : item
+            item.apiId === pokemon.apiId
+              ? { ...item, owned: true, stock: result.shopItem?.stock ?? item.stock }
+              : item
           )
         );
         if (result.purchase) {
