@@ -49,28 +49,32 @@ export default function Navbar() {
     setTheme((currentTheme) => (currentTheme === 'light' ? 'dark' : 'light'));
   };
 
-  const updatePokedexSearch = (value) => {
+  const updateSearch = (value) => {
     const query = value.trim();
-    const path = query ? `/?search=${encodeURIComponent(query)}` : '/';
+    const isShopPage = pathname === '/shop';
+    const isPokedexPage = pathname === '/';
+    const basePath = isShopPage ? '/shop' : '/';
+    const path = query ? `${basePath}?search=${encodeURIComponent(query)}` : basePath;
+    const eventName = isShopPage ? 'pokemon-shop-search-change' : 'pokemon-search-change';
 
-    if (pathname !== '/') {
+    if (!isShopPage && !isPokedexPage) {
       router.push(path);
       return;
     }
 
     window.history.replaceState(null, '', path);
-    window.dispatchEvent(new CustomEvent('pokemon-search-change', { detail: query }));
+    window.dispatchEvent(new CustomEvent(eventName, { detail: query }));
   };
 
   const handleSearchChange = (event) => {
     const value = event.target.value;
     setSearchTerm(value);
-    updatePokedexSearch(value);
+    updateSearch(value);
   };
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
-    updatePokedexSearch(searchTerm);
+    updateSearch(searchTerm);
   };
 
   return (
@@ -93,7 +97,11 @@ export default function Navbar() {
                   value={searchTerm}
                   onChange={handleSearchChange}
                   className="w-full bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border border-transparent dark:border-gray-700 rounded-full py-2 px-4 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors placeholder-gray-500 dark:placeholder-gray-400"
-                  placeholder="Search Pokemon by name or number..."
+                  placeholder={
+                    pathname === '/shop'
+                      ? 'Search shop by name or number...'
+                      : 'Search Pokemon by name or number...'
+                  }
                 />
                 <button
                   type="submit"
