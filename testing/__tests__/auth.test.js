@@ -7,6 +7,7 @@ jest.mock('../../backend/models/pokemon.model.js', () => ({
     delete: jest.fn(),
     create: jest.fn(),
     addPokemonToUser: jest.fn(),
+    purchaseForUser: jest.fn(),
   },
 }));
 jest.mock('../../backend/models/emailLog.model.js', () => ({
@@ -39,6 +40,7 @@ import {
   deletePokemonHandler,
   getPokemonHandler,
 } from '../../backend/controllers/pokemon.controller.js';
+import { buyPokemonHandler } from '../../backend/controllers/shop.controller.js';
 import { UserModel } from '../../backend/models/user.model.js'; // Imports the Model to mock
 import { createMockUser } from './helpers/mockFactories.js'; // Helper to create fake users
 import bcrypt from 'bcryptjs';
@@ -224,6 +226,24 @@ describe('Pokemon Controller - CRUD Unit Tests', () => {
     expect(mockRes.status).toHaveBeenCalledWith(404);
   });
 
+  it('should return 401 when updating with an invalid token payload', async () => {
+    mockReq.user = {};
+
+    await updatePokemonHandler(mockReq, mockRes);
+
+    expect(PokemonModel.update).not.toHaveBeenCalled();
+    expect(mockRes.status).toHaveBeenCalledWith(401);
+  });
+
+  it('should return 400 when updating an invalid pokemon ID', async () => {
+    mockReq.params.id = 'not-a-number';
+
+    await updatePokemonHandler(mockReq, mockRes);
+
+    expect(PokemonModel.update).not.toHaveBeenCalled();
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+  });
+
   it('should return 204 on successful pokemon deletion', async () => {
     PokemonModel.delete.mockResolvedValue(true);
 
@@ -241,6 +261,15 @@ describe('Pokemon Controller - CRUD Unit Tests', () => {
 
     expect(mockRes.status).toHaveBeenCalledWith(404);
     expect(mockRes.send).not.toHaveBeenCalled();
+  });
+
+  it('should return 401 when deleting with an invalid token payload', async () => {
+    mockReq.user = {};
+
+    await deletePokemonHandler(mockReq, mockRes);
+
+    expect(PokemonModel.delete).not.toHaveBeenCalled();
+    expect(mockRes.status).toHaveBeenCalledWith(401);
   });
 
   it('should return 200 and a paginated list of pokemons on GET', async () => {
@@ -270,5 +299,100 @@ describe('Pokemon Controller - CRUD Unit Tests', () => {
         itemsPerPage: 5,
       },
     });
+  });
+});
+
+describe('Shop Controller - Purchase Unit Tests', () => {
+  let mockReq;
+  let mockRes;
+  let originalFetch;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    originalFetch = global.fetch;
+    mockReq = {
+      body: {
+        apiId: 4,
+        name: 'malicious-name',
+        price: -999,
+        image: 'https://example.com/fake.png',
+      },
+      user: { id: 42, email: 'buyer@test.com' },
+    };
+    mockRes = {
+      status: jest.fn(() => mockRes),
+      json: jest.fn(),
+    };
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: jest.fn().mockResolvedValue({
+        id: 4,
+        name: 'charmander',
+        types: [{ type: { name: 'fire' } }],
+      }),
+    });
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it('should buy a pokemon using server-side price and external Pokemon data', async () => {
+    PokemonModel.purchaseForUser.mockResolvedValue({
+      newBalance: 150,
+      pokemon: { id: 7, name: 'charmander', apiId: 4 },
+      user: { id: 42, nickname: 'Ash' },
+    });
+
+    await buyPokemonHandler(mockReq, mockRes);
+
+    expect(global.fetch).toHaveBeenCalledWith('https://pokeapi.co/api/v2/pokemon/4');
+    expect(PokemonModel.purchaseForUser).toHaveBeenCalledWith(
+      42,
+      {
+        apiId: 4,
+        name: 'charmander',
+        price: 50,
+        type: 'fire',
+        image: 'https://img.pokemondb.net/sprites/home/normal/charmander.png',
+      },
+      50
+    );
+    expect(mockRes.status).toHaveBeenCalledWith(200);
+    expect(mockRes.json).toHaveBeenCalledWith({
+      message: 'Purchase successful',
+      newBalance: 150,
+      pokemon: { id: 7, name: 'charmander', apiId: 4 },
+    });
+  });
+
+  it('should reject invalid shop pokemon IDs before calling external services', async () => {
+    mockReq.body.apiId = 999;
+
+    await buyPokemonHandler(mockReq, mockRes);
+
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(PokemonModel.purchaseForUser).not.toHaveBeenCalled();
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+  });
+
+  it('should preserve known purchase errors from the model', async () => {
+    const error = new Error('Insufficient coins for this purchase');
+    error.statusCode = 400;
+    PokemonModel.purchaseForUser.mockRejectedValue(error);
+
+    await buyPokemonHandler(mockReq, mockRes);
+
+    expect(mockRes.status).toHaveBeenCalledWith(400);
+    expect(mockRes.json).toHaveBeenCalledWith({ error: 'Insufficient coins for this purchase' });
+  });
+
+  it('should return 500 when the external Pokemon API fails', async () => {
+    global.fetch = jest.fn().mockResolvedValue({ ok: false });
+
+    await buyPokemonHandler(mockReq, mockRes);
+
+    expect(PokemonModel.purchaseForUser).not.toHaveBeenCalled();
+    expect(mockRes.status).toHaveBeenCalledWith(500);
   });
 });
