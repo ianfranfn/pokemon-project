@@ -3,6 +3,7 @@ import getPool from '../config/db.js';
 let legacyPokemonTableExists;
 let userPokemonColumns;
 let purchaseHistoryTableExists;
+let shopItemsTableExists;
 
 const mapPurchaseHistoryRow = (row) => ({
   id: row.id,
@@ -62,6 +63,22 @@ export class PokemonModel {
 
     purchaseHistoryTableExists = rows[0].tableCount > 0;
     return purchaseHistoryTableExists;
+  }
+
+  static async hasShopItemsTable(executor = getPool()) {
+    if (shopItemsTableExists !== undefined) {
+      return shopItemsTableExists;
+    }
+
+    const [rows] = await executor.query(
+      `SELECT COUNT(*) AS tableCount
+       FROM information_schema.tables
+       WHERE table_schema = DATABASE()
+         AND table_name = 'shop_items'`
+    );
+
+    shopItemsTableExists = rows[0].tableCount > 0;
+    return shopItemsTableExists;
   }
 
   static async findAllByUserId(userId, limit, offset) {
@@ -268,6 +285,121 @@ export class PokemonModel {
     }
   }
 
+  static async purchaseShopItemForUser(userId, pokemonData) {
+    const pool = getPool();
+    const connection = await pool.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      const [users] = await connection.execute(
+        'SELECT id, nickname, coins, last_login_date FROM users WHERE id = ? FOR UPDATE',
+        [userId]
+      );
+      const user = users[0];
+
+      if (!user) {
+        const error = new Error('User not found');
+        error.statusCode = 404;
+        throw error;
+      }
+
+      const [ownedRows] = await connection.execute(
+        'SELECT id FROM user_pokemons WHERE user_id = ? AND api_id = ? LIMIT 1 FOR UPDATE',
+        [userId, pokemonData.apiId]
+      );
+
+      if (ownedRows.length > 0) {
+        const error = new Error('You already own this Pokemon.');
+        error.statusCode = 409;
+        error.code = 'ALREADY_OWNED';
+        throw error;
+      }
+
+      const [shopRows] = await connection.execute(
+        `SELECT api_id, price, rarity, stock, is_active
+         FROM shop_items
+         WHERE api_id = ?
+         FOR UPDATE`,
+        [pokemonData.apiId]
+      );
+      const shopItem = shopRows[0];
+
+      if (!shopItem || !shopItem.is_active) {
+        const error = new Error('This Pokemon is not available in the shop.');
+        error.statusCode = 409;
+        error.code = 'SHOP_ITEM_UNAVAILABLE';
+        throw error;
+      }
+
+      if (shopItem.stock <= 0) {
+        const error = new Error('This Pokemon is out of stock.');
+        error.statusCode = 409;
+        error.code = 'OUT_OF_STOCK';
+        throw error;
+      }
+
+      if (user.coins < shopItem.price) {
+        const error = new Error('Insufficient coins for this purchase');
+        error.statusCode = 400;
+        error.code = 'INSUFFICIENT_COINS';
+        error.currentCoins = user.coins;
+        error.requiredCoins = shopItem.price;
+        error.nextRewardAt = PokemonModel.getNextDailyRewardAt(user.last_login_date);
+        throw error;
+      }
+
+      const newBalance = user.coins - shopItem.price;
+      const newStock = shopItem.stock - 1;
+
+      await connection.execute('UPDATE users SET coins = ? WHERE id = ?', [newBalance, userId]);
+      await connection.execute('UPDATE shop_items SET stock = ? WHERE api_id = ?', [
+        newStock,
+        pokemonData.apiId,
+      ]);
+
+      const pokemon = await PokemonModel.addPokemonToUser(
+        userId,
+        {
+          ...pokemonData,
+          rarity: shopItem.rarity,
+          source: 'shop',
+          purchasePrice: shopItem.price,
+        },
+        connection
+      );
+
+      await PokemonModel.createPurchaseHistory(
+        userId,
+        { ...pokemon, rarity: shopItem.rarity },
+        shopItem.price,
+        connection
+      );
+
+      await connection.commit();
+
+      return {
+        newBalance,
+        pokemon,
+        shopItem: {
+          apiId: shopItem.api_id,
+          price: shopItem.price,
+          rarity: shopItem.rarity,
+          stock: newStock,
+        },
+        user: {
+          id: user.id,
+          nickname: user.nickname,
+        },
+      };
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  }
+
   static getNextDailyRewardAt(lastLoginDate) {
     const now = new Date();
     const todayString = now.toISOString().split('T')[0];
@@ -349,5 +481,54 @@ export class PokemonModel {
     );
 
     return new Map(rows.map((row) => [Number(row.api_id), Number(row.purchase_count)]));
+  }
+
+  static async findOrCreateShopItems(defaultItems) {
+    const pool = getPool();
+    const hasShopTable = await PokemonModel.hasShopItemsTable(pool);
+
+    if (!hasShopTable || defaultItems.length === 0) {
+      return new Map(defaultItems.map((item) => [Number(item.apiId), item]));
+    }
+
+    const values = defaultItems.flatMap((item) => [
+      item.apiId,
+      item.name,
+      item.price,
+      item.rarity,
+      item.stock,
+      true,
+    ]);
+    const placeholders = defaultItems.map(() => '(?, ?, ?, ?, ?, ?)').join(', ');
+
+    await pool.query(
+      `INSERT INTO shop_items (api_id, name, price, rarity, stock, is_active)
+       VALUES ${placeholders}
+       ON DUPLICATE KEY UPDATE name = VALUES(name)`,
+      values
+    );
+
+    const apiIds = defaultItems.map((item) => item.apiId);
+    const selectPlaceholders = apiIds.map(() => '?').join(', ');
+    const [rows] = await pool.query(
+      `SELECT api_id, name, price, rarity, stock, is_active
+       FROM shop_items
+       WHERE api_id IN (${selectPlaceholders})`,
+      apiIds
+    );
+
+    return new Map(
+      rows.map((row) => [
+        Number(row.api_id),
+        {
+          apiId: Number(row.api_id),
+          name: row.name,
+          price: Number(row.price),
+          rarity: row.rarity,
+          stock: Number(row.stock),
+          isActive: Boolean(row.is_active),
+        },
+      ])
+    );
   }
 }

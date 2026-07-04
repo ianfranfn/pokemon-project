@@ -47,25 +47,24 @@ const getBaseStockForApiId = (apiId) => {
   return stockByRarity[getRarityForApiId(apiId)];
 };
 
-const getShopMetadata = (apiId, soldCount = 0) => {
+const getShopMetadata = (apiId) => {
   const rarity = getRarityForApiId(apiId);
 
   return {
     rarity,
     price: getPriceForRarity(rarity),
-    stock: Math.max(getBaseStockForApiId(apiId) - soldCount, 0),
+    stock: getBaseStockForApiId(apiId),
   };
 };
 
-const normalizeShopPokemon = (pokemon, soldCount = 0) => ({
+const normalizeShopPokemon = (pokemon) => ({
   apiId: pokemon.id,
   name: pokemon.name,
-  ...getShopMetadata(pokemon.id, soldCount),
   type: pokemon.types.map((slot) => slot.type.name).join('/'),
   image: buildPokemonImageUrl(pokemon.name),
 });
 
-const fetchPokemonByApiId = async (apiId, soldCount = 0) => {
+const fetchPokemonByApiId = async (apiId) => {
   const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${apiId}`);
 
   if (!response.ok) {
@@ -73,7 +72,7 @@ const fetchPokemonByApiId = async (apiId, soldCount = 0) => {
   }
 
   const data = await response.json();
-  return normalizeShopPokemon(data, soldCount);
+  return normalizeShopPokemon(data);
 };
 
 export const getShopPokemonsHandler = async (req, res) => {
@@ -88,16 +87,28 @@ export const getShopPokemonsHandler = async (req, res) => {
 
     const data = await response.json();
     const ownedApiIds = new Set(await PokemonModel.findOwnedApiIdsByUserId(userId));
-    const apiIds = data.results.map((_, index) => index + 1);
-    const purchaseCounts = await PokemonModel.countPurchaseHistoryByApiIds(apiIds);
-
-    const shopItems = data.results.map((pkm, index) => ({
+    const defaultItems = data.results.map((pkm, index) => ({
       apiId: index + 1,
       name: pkm.name,
-      ...getShopMetadata(index + 1, purchaseCounts.get(index + 1) || 0),
-      image: buildPokemonImageUrl(pkm.name),
-      owned: ownedApiIds.has(index + 1),
+      ...getShopMetadata(index + 1),
     }));
+    const shopItemsByApiId = await PokemonModel.findOrCreateShopItems(defaultItems);
+
+    const shopItems = data.results.map((pkm, index) => {
+      const apiId = index + 1;
+      const shopItem = shopItemsByApiId.get(apiId) || defaultItems[index];
+
+      return {
+        apiId,
+        name: pkm.name,
+        price: shopItem.price,
+        rarity: shopItem.rarity,
+        stock: shopItem.stock,
+        isActive: shopItem.isActive ?? true,
+        image: buildPokemonImageUrl(pkm.name),
+        owned: ownedApiIds.has(apiId),
+      };
+    });
 
     return res.status(200).json({ data: shopItems });
   } catch (error) {
@@ -121,21 +132,8 @@ export const buyPokemonHandler = async (req, res) => {
       return res.status(409).json({ error: 'You already own this Pokemon.', code: 'ALREADY_OWNED' });
     }
 
-    const purchaseCounts = await PokemonModel.countPurchaseHistoryByApiIds([normalizedApiId]);
-    const selectedPokemon = await fetchPokemonByApiId(
-      normalizedApiId,
-      purchaseCounts.get(normalizedApiId) || 0
-    );
-
-    if (selectedPokemon.stock <= 0) {
-      return res.status(409).json({ error: 'This Pokemon is out of stock.', code: 'OUT_OF_STOCK' });
-    }
-
-    const result = await PokemonModel.purchaseForUser(
-      userId,
-      selectedPokemon,
-      selectedPokemon.price
-    );
+    const selectedPokemon = await fetchPokemonByApiId(normalizedApiId);
+    const result = await PokemonModel.purchaseShopItemForUser(userId, selectedPokemon);
 
     logger.info(
       `User ${result.user.nickname} bought ${selectedPokemon.name}. New balance: ${result.newBalance}`
@@ -145,11 +143,12 @@ export const buyPokemonHandler = async (req, res) => {
       message: 'Purchase successful',
       newBalance: result.newBalance,
       pokemon: result.pokemon,
+      shopItem: result.shopItem,
       purchase: {
         apiId: selectedPokemon.apiId,
         name: selectedPokemon.name,
-        price: selectedPokemon.price,
-        rarity: selectedPokemon.rarity,
+        price: result.shopItem.price,
+        rarity: result.shopItem.rarity,
         source: 'shop',
         purchasedAt: new Date().toISOString(),
       },

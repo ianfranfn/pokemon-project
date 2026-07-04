@@ -43,6 +43,20 @@ CREATE TABLE IF NOT EXISTS purchase_history (
     ON DELETE SET NULL
 );
 
+CREATE TABLE IF NOT EXISTS shop_items (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  api_id INT NOT NULL UNIQUE,
+  name VARCHAR(100) NOT NULL,
+  price INT NOT NULL CHECK (price >= 0),
+  rarity VARCHAR(50) NOT NULL DEFAULT 'common',
+  stock INT NOT NULL DEFAULT 0 CHECK (stock >= 0),
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_shop_items_active (is_active),
+  INDEX idx_shop_items_rarity (rarity)
+);
+
 CREATE TABLE IF NOT EXISTS email_logs (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_email VARCHAR(255) NOT NULL,
